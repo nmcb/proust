@@ -33,9 +33,12 @@ object P {
       case res => res
     })
 
-  def combine[A](l: P[A])(r: P[A]): P[A] =
+  def combine[A](l: P[A], r: P[A]): P[A] =
     P(s => l.parse(s) ++ r.parse(s))
 
   def satisfy(p: Char => Boolean): P[Char] =
     item.flatMap(c => if p(c) then unit(c) else zero)
+
+  def oneOf(s: String): P[Char] =
+    s.map(c => satisfy(_ == c)).fold(zero)(combine)
 }

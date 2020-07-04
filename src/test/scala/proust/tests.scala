@@ -7,7 +7,11 @@ class ParserTests {
 
   import P._
 
-  @Test def test(): Unit = {
+  @Test def testSatisfy(): Unit = {
     assertEquals(run(satisfy(_ == 'c'))("c"), 'c')
+  }
+
+  @Test def testOneOf(): Unit = {
+    assertEquals(run(oneOf("abcd"))("c"), 'c')
   }
 }
