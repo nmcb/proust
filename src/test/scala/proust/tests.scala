@@ -19,6 +19,10 @@ class ParserTests {
     assertEquals(run(string("abcd"))("abcd"), "abcd")
   }
 
+  @Test def testSpaces(): Unit = {
+    assertEquals(run(string(" \t\n\r"))(" \t\n\r"), " \t\n\r")
+  }
+
   // @Test def testFlatMap(): Unit = {
   //   assertEquals(run(satisfy(_ == '+').flatMap(_.toInt))("c"), 1)
   // }

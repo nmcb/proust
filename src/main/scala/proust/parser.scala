@@ -27,24 +27,60 @@ object P {
   def unit[A](a: A): P[A] = 
     P(s => List((a, s)))
   
-  implicit def pFunctor[A]: Functor[P] =
+  implicit val pFunctor: Functor[P] =
     new Functor[P] {
-      def map[A,B](pa: P[A])(f: A => B): P[B] =
-        P(s => pa.parse(s).map((a, ss) => (f(a), ss)))
+      def map[A,B](f: A => B)(pa: P[A]): P[B] =
+        pa.map(f)
     }
     
-  implicit def pApplicative[A]: Applicative[P] =
+  implicit val pApplicative: Applicative[P] =
     new Applicative[P] {
       def pure[A](a: A): P[A] =
         unit(a)
-      def ap[A,B](pf: P[A => B])(fa: P[A]): P[B] =
-        P(s => pf.parse(s).flatMap((f,s1) => fa.parse(s1).map((a, s2) => (f(a), s2))))
+      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
+        P(s => pf.parse(s).flatMap((f,s1) => pa.parse(s1).map((a, s2) => (f(a), s2))))
+    }
+
+  implicit def pMonad(implicit applicative: Applicative[P]): Monad[P] =
+    new Monad[P] {
+      def flatMap[A,B](pa: P[A])(f: A => P[B]): P[B] =
+        pa.bind(f)
+      def pure[A](a: A): P[A] =
+        applicative.pure(a)
+      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
+        applicative.ap(pf)(pa)
+      }
+
+  implicit def pMonadPlus(implicit monad: Monad[P]): MonadPlus[P] =
+    new MonadPlus[P] {
+      def mzero[A]: P[A] =
+        fail
+      def mplus[A](pl: P[A])(pr: P[A]): P[A] =
+        combine(pl, pr)
+      def flatMap[A,B](pa: P[A])(f: A => P[B]): P[B] =
+        monad.flatMap(pa)(f)
+      def pure[A](a: A): P[A] =
+        monad.pure(a)
+      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
+        monad.ap(pf)(pa)
+    }  
+
+  implicit def pAlternative(implicit monadPlus: MonadPlus[P]): Alternative[P] =
+    new Alternative[P] {
+      def empty[A]: P[A] =
+        monadPlus.mzero
+      def or[A](pl: P[A])(pr: P[A]): P[A] =
+        option(pl)(pr)
+      def pure[A](a: A): P[A] =
+        monadPlus.pure(a)
+      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
+        monadPlus.ap(pf)(pa)
     }
 
   def item: P[Char] =
     P(s => if (s.length == 0) Nil else List((s.head, s.tail)))
 
-  def empty[A]: P[A] =
+  def fail[A]: P[A] =
     P(_ => Nil)
 
   def option[A](l: P[A])(r: P[A]): P[A] =
@@ -57,10 +93,10 @@ object P {
     P(s => l.parse(s) ++ r.parse(s))
 
   def satisfy(p: Char => Boolean): P[Char] =
-    item.bind(c => if p(c) then unit(c) else empty)
+    item.bind(c => if p(c) then unit(c) else fail)
 
   def oneOf(s: String): P[Char] =
-    s.map(c => satisfy(_ == c)).fold(empty)(combine)
+    s.map(c => satisfy(_ == c)).fold(fail)(combine)
 
   def char(c: Char): P[Char] =
     satisfy(_ == c)
@@ -68,4 +104,6 @@ object P {
   def string(s: String): P[String] =
     if (s.isEmpty) then unit("") else for { _ <- char(s.head) ; _ <- string(s.tail) } yield s
 
+  def spaces: P[String] =
+    pAlternative.many(oneOf(" \t\n\r")).map(_.mkString)
 }
