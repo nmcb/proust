@@ -1,6 +1,6 @@
 package proust
 
-case class P[A](parse: String => List[(A,String)]) {
+case class P[+A](parse: String => List[(A,String)]) {
 
   def identity: P[A] =
     this
@@ -26,13 +26,13 @@ case class P[A](parse: String => List[(A,String)]) {
   def ap[B](ff: P[A => B]): P[B] =
     P(s => for { (f, s1) <- ff.parse(s) ; (a, s2) <- parse(s1) } yield (f(a), s2))
 
-  def |!|(that: => P[A]): P[A] =
+  def |!|[A1 >: A](that: => P[A1]): P[A1] =
     P(s => parse(s) match {
       case Nil => that.parse(s)
-      case res => res
+      case res: List[(A1, String)] => res
     })
 
-  def |&|(that: P[A]): P[A] =
+  def |&|[A1 >: A](that: P[A1]): P[A1] =
     P(s => parse(s) ++ that.parse(s))
   
   def |~|[B](that: P[B]): P[B] =
@@ -41,11 +41,11 @@ case class P[A](parse: String => List[(A,String)]) {
   def foldLeft[B](b: B)(f: B => A => B): P[B] =
     P(s => for { (a,s1) <- parse(s) } yield (f(b)(a), s1))
 
-  def chainl(pf: P[A => A => A])(a: A): P[A] =
+  def chainl[A1 >: A](pf: P[A1 => A1 => A1])(a: A1): P[A1] =
     chainl1(pf) |!| unit(a)
 
-  def chainl1(pf: P[A => A => A]): P[A] = {
-    def rest(a: A): P[A] = (for { f <- pf ; b <- this } yield f(a)(b)) |!| unit(a)
+  def chainl1[A1 >: A](pf: P[A1 => A1 => A1]): P[A1] = {
+    def rest(a: A1): P[A1] = (for { f <- pf ; b <- this } yield f(a)(b)) |!| unit(a)
     for { a <- this ; r <- rest(a) } yield r
   }
 
