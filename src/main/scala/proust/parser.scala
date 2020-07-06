@@ -1,6 +1,20 @@
 package proust
 
+// import scala.language.postfixOps
+
 case class P[A](parse: String => List[(A,String)]) {
+
+  def identity: P[A] =
+    this
+
+  def unit: P[A] =
+    identity
+
+  def unit[B](b: B): P[B] =
+    P.unit(b)
+
+  def fail: P[A] =
+    P.fail
 
   def bind[B](f: A => P[B]): P[B] =
     P(s => parse(s).map((a,ss) => f(a).parse(ss)).fold(Nil)(_ ++ _))
@@ -11,8 +25,26 @@ case class P[A](parse: String => List[(A,String)]) {
   def map[B](f: A => B): P[B] =
     P(s => parse(s).map((a, ss) => (f(a), ss)))
 
-  def ap[A](p: P[A]): P[A] =
-    ???
+  def ap[B](ff: P[A => B]): P[B] =
+    P(s => for { (f, s1) <- ff.parse(s) ; (a, s2) <- parse(s1) } yield (f(a), s2))
+
+  def |!|(that: => P[A]): P[A] =
+    P(s => parse(s) match {
+      case Nil => that.parse(s)
+      case res => res
+    })
+
+  def |&|(that: P[A]): P[A] =
+    P(s => parse(s) ++ that.parse(s))
+
+  def fold[B](b: B)(pf: P[A => B => B]): P[B] = {
+    def rest(a: A): P[B] = (for { f <- pf ; a <- this } yield f(a)(b) ) |!| unit(b)
+    for { a <- this ; r <- rest(a) } yield r
+  }
+
+  def chainl(pf: P[A => A => A]): P[A] =
+    for { a <- this ; r <- fold(a)(pf) } yield r
+
 }
 
 object P {
@@ -27,70 +59,14 @@ object P {
   def unit[A](a: A): P[A] = 
     P(s => List((a, s)))
   
-  implicit val pFunctor: Functor[P] =
-    new Functor[P] {
-      def map[A,B](f: A => B)(pa: P[A]): P[B] =
-        pa.map(f)
-    }
-    
-  implicit val pApplicative: Applicative[P] =
-    new Applicative[P] {
-      def pure[A](a: A): P[A] =
-        unit(a)
-      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
-        P(s => pf.parse(s).flatMap((f,s1) => pa.parse(s1).map((a, s2) => (f(a), s2))))
-    }
-
-  implicit def pMonad(implicit applicative: Applicative[P]): Monad[P] =
-    new Monad[P] {
-      def flatMap[A,B](pa: P[A])(f: A => P[B]): P[B] =
-        pa.bind(f)
-      def pure[A](a: A): P[A] =
-        applicative.pure(a)
-      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
-        applicative.ap(pf)(pa)
-      }
-
-  implicit def pMonadPlus(implicit monad: Monad[P]): MonadPlus[P] =
-    new MonadPlus[P] {
-      def mzero[A]: P[A] =
-        fail
-      def mplus[A](pl: P[A])(pr: P[A]): P[A] =
-        combine(pl, pr)
-      def flatMap[A,B](pa: P[A])(f: A => P[B]): P[B] =
-        monad.flatMap(pa)(f)
-      def pure[A](a: A): P[A] =
-        monad.pure(a)
-      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
-        monad.ap(pf)(pa)
-    }  
-
-  implicit def pAlternative(implicit monadPlus: MonadPlus[P]): Alternative[P] =
-    new Alternative[P] {
-      def empty[A]: P[A] =
-        monadPlus.mzero
-      def or[A](pl: P[A])(pr: P[A]): P[A] =
-        option(pl)(pr)
-      def pure[A](a: A): P[A] =
-        monadPlus.pure(a)
-      def ap[A,B](pf: P[A => B])(pa: P[A]): P[B] =
-        monadPlus.ap(pf)(pa)
-    }
-
   def item: P[Char] =
     P(s => if (s.length == 0) Nil else List((s.head, s.tail)))
 
   def fail[A]: P[A] =
     P(_ => Nil)
 
-  def option[A](l: P[A])(r: P[A]): P[A] =
-    P(s => l.parse(s) match {
-      case Nil => r.parse(s)
-      case res => res
-    })
-
   def combine[A](l: P[A], r: P[A]): P[A] =
-    P(s => l.parse(s) ++ r.parse(s))
+    l |&| r
 
   def satisfy(p: Char => Boolean): P[Char] =
     item.bind(c => if p(c) then unit(c) else fail)
@@ -104,6 +80,7 @@ object P {
   def string(s: String): P[String] =
     if (s.isEmpty) then unit("") else for { _ <- char(s.head) ; _ <- string(s.tail) } yield s
 
-  def spaces: P[String] =
-    pAlternative.many(oneOf(" \t\n\r")).map(_.mkString)
+  def digit: P[Char] =
+    satisfy(_.isDigit)
+
 }
