@@ -17,7 +17,7 @@ object parser {
   import P._
 
   def name: P[Name] =
-    oneOf("abcdefghifklmnopqrstuvwxyz-").many.map(_.mkString)
+    oneOf("abcdefghifklmnopqrstuvwxyz-").oneOrMore.map(_.mkString)
 
   def variable: P[Var] =
     token(name).map(n => Var(n))
@@ -43,7 +43,7 @@ object parser {
   def annotation: P[Exp] =
     for {
       _ <- reserved("(")
-      e <- variable
+      e <- expression
       _ <- reserved(":")
       t <- typ
       _ <- reserved(")")

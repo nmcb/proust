@@ -45,8 +45,8 @@ case class P[+A](parse: String => List[(A,String)]) {
     chainl1(pf) |!| unit(a)
 
   def chainl1[A1 >: A](pf: P[A1 => A1 => A1]): P[A1] = {
-    def rest(a: A1): P[A1] = (for { f <- pf ; b <- this } yield f(a)(b)) |!| unit(a)
-    for { a <- this ; r <- rest(a) } yield r
+    def rest(a: A1): P[A1] = (for { f <- pf ; b <- this ; r <- rest(f(a)(b)) } yield r) |!| unit(a)
+    for { a <- this ; r <- rest(a) ; } yield r
   }
 
   private def rest(s: String, acc: List[A]): (List[A], String) =
@@ -56,12 +56,10 @@ case class P[+A](parse: String => List[(A,String)]) {
       case l            => sys.error(s"Multiple results: ${l}")
     }
 
-  // One or more
-  def some: P[List[A]] =
+  def oneOrMore: P[List[A]] =
     P(s => for { (a,s1) <- parse(s) } yield rest(s1, List(a)))
     
-  // Zero or more
-  def many: P[List[A]] =
+  def zeroOrMore: P[List[A]] =
     P(s => List(rest(s, Nil)) )
 }
 
@@ -99,7 +97,7 @@ object P {
     if (s.isEmpty) then unit("") else for { _ <- char(s.head) ; _ <- string(s.tail) } yield s
 
   def spaces: P[String] =
-    oneOf(" \t\n\r").many.map(_.mkString)
+    oneOf(" \t\n\r").zeroOrMore.map(_.mkString)
 
   def token[A](p: P[A]): P[A] =
     for { a <- p ; _ <- spaces } yield a
@@ -111,17 +109,10 @@ object P {
     satisfy(_.isDigit)
 
   def number: P[Int] =
-    for {
-      s <- string("-") |!| unit("")
-      r <- digit.some
-    } yield (s + r.mkString).toInt
+    for { s <- string("-") |!| unit("") ; r <- digit.oneOrMore } yield (s + r.mkString).toInt
 
   def parens[A](pa: P[A]): P[A] =
-    for {
-      _ <- reserved("(")
-      a <- pa
-      _ <- reserved(")")
-    } yield a 
+    for { _ <- reserved("(") ; a <- pa ; _ <- reserved(")") } yield a 
 
   object calculator {
 
@@ -143,8 +134,8 @@ object P {
       case Lit(v)    => v
     }
 
-    // number = [ "-" ] digit { digit }
     // digit  = "0" | "1" | ... | "8" | "9"
+    // int    = [ "-" ] digit { digit }
     // expr   = term { addop term }
     // term   = factor { mulop factor }
     // factor = "(" expr ")" | number
@@ -155,18 +146,18 @@ object P {
       for { n <- number } yield Lit(n)
 
     def expr: P[Expr] =
-      term.chainl1(addOp)
+      term.chainl1(addop)
 
     def term: P[Expr] =
-      factor.chainl1(mulOp)
+      factor.chainl1(mulop)
 
     def factor: P[Expr] =
       int |!| parens(expr)
 
-    def addOp: P[Expr => Expr => Expr] =
+    def addop: P[Expr => Expr => Expr] =
       infixOp("+", l => r => Add(l, r)) |!| infixOp("-", l => r => Sub(l, r))
 
-    def mulOp: P[Expr => Expr => Expr] =
+    def mulop: P[Expr => Expr => Expr] =
       infixOp("*", l => r => Mul(l, r)) |!| infixOp("/", l => r => Div(l, r))
 
     def infixOp(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
