@@ -38,7 +38,7 @@ case class P[+A](parse: String => List[(A,String)]) {
   def |~|[B](that: P[B]): P[B] =
     for { _ <- this ; b <- that } yield b
     
-  def foldLeft[B](b: B)(f: B => A => B): P[B] =
+  def foldl[B](b: B)(f: B => A => B): P[B] =
     P(s => for { (a,s1) <- parse(s) } yield (f(b)(a), s1))
 
   def chainl[A1 >: A](pf: P[A1 => A1 => A1])(a: A1): P[A1] =
@@ -155,12 +155,12 @@ object P {
       int |!| parens(expr)
 
     def addop: P[Expr => Expr => Expr] =
-      infixOp("+", l => r => Add(l, r)) |!| infixOp("-", l => r => Sub(l, r))
+      infixop("+", l => r => Add(l, r)) |!| infixop("-", l => r => Sub(l, r))
 
     def mulop: P[Expr => Expr => Expr] =
-      infixOp("*", l => r => Mul(l, r)) |!| infixOp("/", l => r => Div(l, r))
+      infixop("*", l => r => Mul(l, r)) |!| infixop("/", l => r => Div(l, r))
 
-    def infixOp(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
+    def infixop(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
       reserved(s) |~| unit(f)
         
     def parse(s: String): Expr =

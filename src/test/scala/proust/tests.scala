@@ -20,52 +20,52 @@ class ParserTests {
     unit(x => y => if (x > y) then x else y)
 
   @Test def testChainl1(): Unit = {
-    assertEquals(('1'), run(digit.chainl1(gt))("1"))
-    assertEquals(('2'), run(digit.chainl1(gt))("12"))
-    assertEquals(('3'), run(digit.chainl1(gt))("123"))
+    assertEquals( '1' , run(digit.chainl1(gt))("1"))
+    assertEquals( '2' , run(digit.chainl1(gt))("12"))
+    assertEquals( '3' , run(digit.chainl1(gt))("123"))
    }
 
    @Test def testChainl(): Unit = {
-    assertEquals(('0'), run(digit.chainl(gt)('0'))(""))
-    assertEquals(('1'), run(digit.chainl(gt)('0'))("1"))
-    assertEquals(('2'), run(digit.chainl(gt)('0'))("12"))
-    assertEquals(('3'), run(digit.chainl(gt)('0'))("123"))
+    assertEquals( '0' , run(digit.chainl(gt)('0'))(""))
+    assertEquals( '1' , run(digit.chainl(gt)('0'))("1"))
+    assertEquals( '2' , run(digit.chainl(gt)('0'))("12"))
+    assertEquals( '3' , run(digit.chainl(gt)('0'))("123"))
    }
 
   @Test def testSatisfy(): Unit = {
-    assertEquals(run(satisfy(_ == 'c'))("c"), 'c')
+    assertEquals( 'c' , run(satisfy(_ == 'c'))("c"))
   }
 
   @Test def testChar(): Unit = {
-    assertEquals(run(char('c'))("c"), 'c')
+    assertEquals( 'c' , run(char('c'))("c"))
   }
 
   @Test def testString(): Unit = {
-    assertEquals(run(string("abcd"))("abcd"), "abcd")
+    assertEquals( "abcd", run(string("abcd"))("abcd"))
   }
 
   @Test def testSpaces(): Unit = {
-    assertEquals(run(spaces)(" \t\n\r"), " \t\n\r")
+    assertEquals( " \t\n\r" , run(spaces)(" \t\n\r"))
   }
 
   @Test def testToken(): Unit = {
-    assertEquals(run(token(string("abc")))("abc  "), "abc")
+    assertEquals( "abc" , run(token(string("abc")))("abc  "))
   }
 
   @Test def testDigit(): Unit = {
-    assertEquals(run(digit)("1"), '1')
+    assertEquals( '1' , run(digit)("1"))
   }
 
   @Test def testNumber(): Unit = {
-    assertEquals(run(number)("-1"), -1)
-    assertEquals(run(number)("10"), 10)
+    assertEquals( -1 , run(number)("-1"))
+    assertEquals( 10 , run(number)("10"))
   }
 
   @Test def testParens(): Unit = {
-    assertEquals(run(parens(number))("(-1)"), -1)
-    assertEquals(run(parens(number))("(10)"), 10)
-    assertEquals(run(parens(number))("( -1)"), -1)
-    assertEquals(run(parens(number))("( 10)"), 10)
+    assertEquals( -1 , run(parens(number))("(-1)"))
+    assertEquals( 10 , run(parens(number))("(10)"))
+    assertEquals( -1 , run(parens(number))("( -1)"))
+    assertEquals( 10 , run(parens(number))("( 10)"))
   }
 
   @Test def testOneOrMore(): Unit = {
@@ -85,9 +85,9 @@ class CalculatorParserTests {
   import calculator._
 
   @Test def testInt(): Unit = {
-    assertEquals( Lit(1) , run(int)("1"))
-    assertEquals( Lit(-1) , run(int)("-1"))
-    assertEquals( Lit(10) , run(int)("10"))
+    assertEquals( Lit(1)   , run(int)("1"))
+    assertEquals( Lit(-1)  , run(int)("-1"))
+    assertEquals( Lit(10)  , run(int)("10"))
     assertEquals( Lit(-10) , run(int)("-10"))
   }
 
@@ -166,20 +166,20 @@ class ProustParserTests {
   }  
 
   @Test def testProustParserLambda(): Unit = {
-    assertEquals( Lam(Var("a"),Var("b"))                , run(lambda)("(λ a => b)"))
-    assertEquals( Lam(Var("a"),Lam(Var("b"),Var("c")))  , run(lambda)("(λ a => (λ b => c))"))
+    assertEquals( Lam(Var("a"),Var("b"))               , run(lambda)("(λ a => b)"))
+    assertEquals( Lam(Var("a"),Lam(Var("b"),Var("c"))) , run(lambda)("(λ a => (λ b => c))"))
   }  
 
   @Test def testProustParserAnnotation(): Unit = {
-    assertEquals( Ann(Var("a"),Den("A"))                , run(annotation)("(a : A)"))
-    assertEquals( Ann(Var("a"),Den("A"))                , run(annotation)("(a : A)"))
+    assertEquals( Ann(Var("a"),Den("A")) , run(annotation)("(a : A)"))
+    assertEquals( Ann(Var("a"),Den("A")) , run(annotation)("(a : A)"))
   }  
 
   @Test def testProustParserExpr(): Unit = {
-    assertEquals( Lam(Var("a"),Var("b"))                , run(expression)("(λ a => b)"))
-    assertEquals( App(Var("a"),Var("b"))                , run(expression)("(a  b)"))
-    assertEquals( Var("a")                              , run(expression)("a"))
-    assertEquals( Ann(Var("a"),Den("A"))                , run(expression)("(a : A)"))
+    assertEquals( Lam(Var("a"),Var("b")) , run(expression)("(λ a => b)"))
+    assertEquals( App(Var("a"),Var("b")) , run(expression)("(a  b)"))
+    assertEquals( Var("a")               , run(expression)("a"))
+    assertEquals( Ann(Var("a"),Den("A")) , run(expression)("(a : A)"))
   }  
 
   @Test def testProustParserDenotation(): Unit = {
@@ -189,13 +189,13 @@ class ProustParserTests {
   }
 
   @Test def testProustParserArrow(): Unit = { 
-    assertEquals( Arr(Den("A"),Den("B"))                , run(arrow)("(A -> B)"))
-    assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C")))  , run(arrow)("(A -> (B -> C))"))
-    assertEquals( Arr(Arr(Den("A"),Den("B")),Den("C"))  , run(arrow)("((A -> B) -> C)"))
+    assertEquals( Arr(Den("A"),Den("B"))               , run(arrow)("(A -> B)"))
+    assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> (B -> C))"))
+    assertEquals( Arr(Arr(Den("A"),Den("B")),Den("C")) , run(arrow)("((A -> B) -> C)"))
   }  
 
   @Test def testProustParserTyp(): Unit = { 
-    assertEquals( Den("A")                , run(typ)("A"))
-    assertEquals( Arr(Den("A"),Den("B"))  , run(typ)("(A -> B)"))
+    assertEquals( Den("A")               , run(typ)("A"))
+    assertEquals( Arr(Den("A"),Den("B")) , run(typ)("(A -> B)"))
   }  
 }
