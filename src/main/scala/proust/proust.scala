@@ -19,14 +19,16 @@ object parser {
   def name: P[Name] =
     oneOf("abcdefghifklmnopqrstuvwxyz-").oneOrMore.map(_.mkString)
 
+  def typeName: P[Name] =
+    oneOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ-").oneOrMore.map(_.mkString)
+
   def variable: P[Var] =
     token(name).map(n => Var(n))
 
   def application: P[Exp] =
-    for {
+    for { 
       _ <- reserved("(")
       f <- expression
-      _ <- spaces
       x <- expression
       _ <- reserved(")")
     } yield App(f, x)
@@ -53,7 +55,7 @@ object parser {
     lambda |!| application |!| variable |!| annotation
 
   def denotation: P[Den] =
-    token(name).map(n => Den(n))
+    token(typeName).map(n => Den(n))
   
   def arrow: P[Typ] =
     for {
