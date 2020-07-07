@@ -1,12 +1,16 @@
 package proust
 
+import O._
+
 type Name = String
 
-trait Exp
-case class Lam(v: Var, e: Exp) extends Exp
+sealed trait E
+
+sealed trait Exp
+case class Lam(s: Sym, e: Exp) extends Exp
 case class App(f: Exp, x: Exp) extends Exp
 case class Ann(e: Exp, t: Typ) extends Exp
-case class Var(n: Name)        extends Exp
+case class Sym(n: Name)        extends Exp
 
 trait Typ 
 case class Arr(a: Typ, b: Typ) extends Typ
@@ -22,8 +26,8 @@ object parser {
   def typeName: P[Name] =
     oneOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ-").oneOrMore.map(_.mkString)
 
-  def variable: P[Var] =
-    token(name).map(n => Var(n))
+  def symbol[S >: Sym]: P[S] =
+    token(name).map(n => Sym(n))
 
   def application: P[Exp] =
     for { 
@@ -36,11 +40,11 @@ object parser {
   def lambda: P[Exp] =
     for {
       _ <- reserved("(λ")
-      v <- variable
+      s <- symbol
       _ <- reserved("=>")
       e <- expression
       _ <- reserved(")")
-    } yield Lam(v, e)
+    } yield Lam(s, e)
 
   def annotation: P[Exp] =
     for {
@@ -52,7 +56,7 @@ object parser {
     } yield Ann(e, t)
 
   def expression: P[Exp] =
-    lambda |!| application |!| variable |!| annotation
+    lambda |!| application |!| symbol |!| annotation
 
   def denotation: P[Den] =
     token(typeName).map(n => Den(n))
