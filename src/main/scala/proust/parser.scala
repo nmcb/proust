@@ -46,7 +46,7 @@ case class P[+A](parse: String => List[(A,String)]) {
 
   def chainl1[A1 >: A](pf: P[A1 => A1 => A1]): P[A1] = {
     def rest(a: A1): P[A1] = (for { f <- pf ; b <- this ; r <- rest(f(a)(b)) } yield r) |!| unit(a)
-    for { a <- this ; r <- rest(a) ; } yield r
+    for { a <- this ; r <- rest(a) } yield r
   }
 
   private def rest(s: String, acc: List[A]): (List[A], String) =
