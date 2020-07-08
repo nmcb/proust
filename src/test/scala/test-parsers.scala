@@ -1,10 +1,12 @@
 package proust
+package test
 
-import org.junit.Test
+import org.junit._
 import org.junit.Assert._
 
 class ParserTests {
 
+  import parsing._
   import P._
 
   @Test def testFlatMap(): Unit = {
@@ -81,8 +83,9 @@ class ParserTests {
 
 class CalculatorParserTests {
 
-  import P._
+  import parsing._
   import calculator._
+  import P._
 
   @Test def testInt(): Unit = {
     assertEquals( Lit(1)   , run(int)("1"))
@@ -138,6 +141,7 @@ class CalculatorParserTests {
 
 class ProustParserTests {
 
+  import parsing._
   import P._
   import parser._
 
@@ -160,9 +164,12 @@ class ProustParserTests {
   }
 
   @Test def testProustParserApplication(): Unit = {
+    // formal application form
     assertEquals( App(Sym("a"),Sym("b"))               , run(application)("(a b)"))
     assertEquals( App(App(Sym("a"),Sym("b")),Sym("c")) , run(application)("((a b) c)"))
     assertEquals( App(Sym("a"),App(Sym("b"),Sym("c"))) , run(application)("(a (b c))"))
+    // human readable form employing the observation that application is left-associative
+    assertEquals( App(App(Sym("a"),Sym("b")),Sym("c")) , run(application)("(a b c)"))
   }  
 
   @Test def testProustParserLambda(): Unit = {
@@ -191,17 +198,12 @@ class ProustParserTests {
   @Test def testProustParserArrow(): Unit = { 
     assertEquals( Arr(Den("A"),Den("B"))               , run(arrow)("(A -> B)"))
     assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> (B -> C))"))
-    assertEquals( Arr(Arr(Den("A"),Den("B")),Den("C")) , run(arrow)("((A -> B) -> C)"))
+    // human readable form employing the observation that application is right-associative
+    assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> B -> C)"))
   }  
 
   @Test def testProustParserTyp(): Unit = { 
     assertEquals( Den("A")               , run(typ)("A"))
     assertEquals( Arr(Den("A"),Den("B")) , run(typ)("(A -> B)"))
   }  
-}
-
-class DisjcunctionTests {
-
-  import O._
-  
 }

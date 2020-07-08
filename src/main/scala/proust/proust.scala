@@ -1,10 +1,6 @@
 package proust
 
-import O._
-
 type Name = String
-
-sealed trait E
 
 sealed trait Exp
 case class Lam(s: Sym, e: Exp) extends Exp
@@ -18,6 +14,8 @@ case class Den(n: Name)        extends Typ
 
 object parser {
 
+  import disjoining._
+  import parsing._
   import P._
 
   def name: P[Name] =
@@ -75,5 +73,4 @@ object parser {
 
   def parseExpr(s: String): Exp =
     run(expression)(s)
-  
 }

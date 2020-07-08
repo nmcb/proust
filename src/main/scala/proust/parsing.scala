@@ -1,5 +1,7 @@
 package proust
 
+object parsing {
+
 case class P[+A](parse: String => List[(A,String)]) {
 
   def identity: P[A] =
@@ -113,58 +115,61 @@ object P {
 
   def parens[A](pa: P[A]): P[A] =
     for { _ <- reserved("(") ; a <- pa ; _ <- reserved(")") } yield a 
+}
 
-  object calculator {
+object calculator {
 
-    sealed trait Expr
-    case class Add(l: Expr, r: Expr) extends Expr
-    case class Sub(l: Expr, r: Expr) extends Expr
-    case class Mul(l: Expr, r: Expr) extends Expr
-    case class Div(l: Expr, r: Expr) extends Expr
-    case class Lit(v: Int)           extends Expr
+  import parsing._
+  import P._
 
-    def eval(s: String): Int =
-      eval(parse(s))
+  sealed trait Expr
+  case class Add(l: Expr, r: Expr) extends Expr
+  case class Sub(l: Expr, r: Expr) extends Expr
+  case class Mul(l: Expr, r: Expr) extends Expr
+  case class Div(l: Expr, r: Expr) extends Expr
+  case class Lit(v: Int)           extends Expr
 
-    def eval(e: Expr): Int = e match {
-      case Add(l, r) => eval(l) + eval(r)
-      case Sub(l, r) => eval(l) - eval(r)
-      case Mul(l, r) => eval(l) * eval(r)
-      case Div(l, r) => eval(l) / eval(r)
-      case Lit(v)    => v
-    }
+  def eval(s: String): Int =
+    eval(parse(s))
 
-    // digit  = "0" | "1" | ... | "8" | "9"
-    // int    = [ "-" ] digit { digit }
-    // expr   = term { addop term }
-    // term   = factor { mulop factor }
-    // factor = "(" expr ")" | number
-    // addop  = "+" | "-"
-    // mulop  = "*" | "/"
-
-    def int: P[Expr] =
-      for { n <- number } yield Lit(n)
-
-    def expr: P[Expr] =
-      term.chainl1(addop)
-
-    def term: P[Expr] =
-      factor.chainl1(mulop)
-
-    def factor: P[Expr] =
-      int |!| parens(expr)
-
-    def addop: P[Expr => Expr => Expr] =
-      infixop("+", l => r => Add(l, r)) |!| infixop("-", l => r => Sub(l, r))
-
-    def mulop: P[Expr => Expr => Expr] =
-      infixop("*", l => r => Mul(l, r)) |!| infixop("/", l => r => Div(l, r))
-
-    def infixop(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
-      reserved(s) |~| unit(f)
-        
-    def parse(s: String): Expr =
-      run(expr)(s)
-  
+  def eval(e: Expr): Int = e match {
+    case Add(l, r) => eval(l) + eval(r)
+    case Sub(l, r) => eval(l) - eval(r)
+    case Mul(l, r) => eval(l) * eval(r)
+    case Div(l, r) => eval(l) / eval(r)
+    case Lit(v)    => v
   }
+
+  // digit  = "0" | "1" | ... | "8" | "9"
+  // int    = [ "-" ] digit { digit }
+  // expr   = term { addop term }
+  // term   = factor { mulop factor }
+  // factor = "(" expr ")" | number
+  // addop  = "+" | "-"
+  // mulop  = "*" | "/"
+
+  def int: P[Expr] =
+    for { n <- number } yield Lit(n)
+
+  def expr: P[Expr] =
+    term.chainl1(addop)
+
+  def term: P[Expr] =
+    factor.chainl1(mulop)
+
+  def factor: P[Expr] =
+    int |!| parens(expr)
+
+  def addop: P[Expr => Expr => Expr] =
+    infixop("+", l => r => Add(l, r)) |!| infixop("-", l => r => Sub(l, r))
+
+  def mulop: P[Expr => Expr => Expr] =
+    infixop("*", l => r => Mul(l, r)) |!| infixop("/", l => r => Div(l, r))
+
+  def infixop(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
+    reserved(s) |~| unit(f)
+      
+  def parse(s: String): Expr =
+    run(expr)(s)
+}  
 }
