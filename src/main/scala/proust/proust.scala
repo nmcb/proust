@@ -4,7 +4,7 @@ type Name = String
 
 sealed trait Exp
 case class Lam(s: Sym, e: Exp) extends Exp
-case class App(f: Exp, x: Exp) extends Exp
+case class App(f: Exp, a: Exp) extends Exp
 case class Ann(e: Exp, t: Typ) extends Exp
 case class Sym(n: Name)        extends Exp
 
@@ -102,4 +102,21 @@ object parser {
 
   def parseExpr(s: String): Exp =
     run(expression)(s)
+}
+
+object printer {
+
+  def print(e: Exp): String =
+    e match {
+      case Lam(s,e) => s"(λ ${print(s)} => ${print(e)})"
+      case App(f,a) => s"(${print(f)} ${print(a)})"
+      case Sym(n)   => n
+      case Ann(e,t) => s"(${print(e)} : ${print(t)})"
+    }
+
+  def print(t: Typ): String =
+    t match {
+      case Arr(a,b) => s"(${print(a)} -> ${print(b)})"
+      case Den(n)   => n
+    }
 }
