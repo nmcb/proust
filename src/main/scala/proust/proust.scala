@@ -78,12 +78,12 @@ object parser {
       _ <- reserved(")")
     } yield Arr(f, t)
 
-  def arrowrep: P[Typ] = {
+  def arrrep: P[Typ] = {
 
-    def rassoc(l: List[Typ]): Typ =
-      l.reverse match {
-        case l :: f :: previous => previous.foldLeft(Arr(f, l))((a,e) => Arr(e,a))
-        case l                  => sys.error(s"Not enough results: $l")
+    def rightAssoc(ts: List[Typ]): Typ =
+      ts.reverse match {
+        case a1 :: a2 :: tail => tail.foldLeft(Arr(a2, a1))((a,e) => Arr(e,a))
+        case _                => sys.error("boom!")
       }
 
     for { 
@@ -94,11 +94,11 @@ object parser {
       _  <- reserved("->")
       r  <- seperated("->", typ)
       _  <- reserved(")")
-    } yield rassoc(t1 :: t2 :: r)
+    } yield rightAssoc(t1 :: t2 :: r)
   }
 
   def typ: P[Typ] =
-    arrow |!| arrowrep |!| denotation
+    arrow |!| arrrep |!| denotation
 
   def parseExpr(s: String): Exp =
     run(expression)(s)
