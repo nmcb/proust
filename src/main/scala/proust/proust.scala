@@ -12,6 +12,8 @@ trait Typ
 case class Arr(a: Typ, b: Typ) extends Typ
 case class Den(n: Name)        extends Typ
 
+type Ctx = Map[Sym,Typ]
+
 object parser {
 
   import disjoining._
@@ -100,7 +102,7 @@ object parser {
   def typ: P[Typ] =
     arrow |!| arrrep |!| denotation
 
-  def parseExpr(s: String): Exp =
+  def parse(s: String): Exp =
     run(expression)(s)
 }
 
@@ -119,4 +121,52 @@ object printer {
       case Arr(a,b) => s"(${print(a)} -> ${print(b)})"
       case Den(n)   => n
     }
+
+  def print(c: Ctx): String =
+    c.map((s,t) => s"\n$s : ${print(t)}").mkString
+}
+
+object typer {
+
+  def check(c: Ctx, e: Exp, t: Typ): Boolean = {
+
+    def cerror =
+      sys.error(
+        s""" Unable to check
+           |
+           | Exp: ${print(e)}
+           | Typ: ${print(t)}
+           | Ctx: ${print(c)}
+        """.stripMargin)
+
+    (e,t) match {
+      case (Lam(s,e),Arr(a,b))  => check(c + (s -> a), e, b)
+      case (Lam(x,t),_)         => cerror
+      case _ if t == synth(c,e) => true
+      case _                    => cerror
+    }
+  }
+
+  def synth(ctx: Ctx, exp: Exp): Typ = {
+
+    def serror =
+      sys.error(
+        s""" Unable to synth
+            |
+            | Exp: ${print(exp)}
+            | Ctx: ${print(ctx)}
+        """.stripMargin)
+    
+    exp match {
+      case Lam(_,_)                         => serror
+      case Ann(e,t) if check(ctx, e, t)     => t
+      case App(f,x)                         =>
+        synth(ctx,f) match {
+          case Arr(a,b) if check(ctx, x, a) => b
+          case _                            => serror
+        }
+      case s: Sym                           => ctx.getOrElse(s, serror)
+      case _                                => serror
+    }
+  }
 }
