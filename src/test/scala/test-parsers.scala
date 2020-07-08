@@ -168,8 +168,6 @@ class ProustParserTests {
     assertEquals( App(Sym("a"),Sym("b"))               , run(application)("(a b)"))
     assertEquals( App(App(Sym("a"),Sym("b")),Sym("c")) , run(application)("((a b) c)"))
     assertEquals( App(Sym("a"),App(Sym("b"),Sym("c"))) , run(application)("(a (b c))"))
-    // human readable form employing the observation that application is left-associative
-    assertEquals( App(App(Sym("a"),Sym("b")),Sym("c")) , run(application)("(a b c)"))
   }  
 
   @Test def testProustParserLambda(): Unit = {
@@ -187,6 +185,8 @@ class ProustParserTests {
     assertEquals( App(Sym("a"),Sym("b")) , run(expression)("(a  b)"))
     assertEquals( Sym("a")               , run(expression)("a"))
     assertEquals( Ann(Sym("a"),Den("A")) , run(expression)("(a : A)"))
+    // human readable form employing the observation that application is left-associative
+    assertEquals( App(App(Sym("a"),Sym("b")),Sym("c")) , run(expression)("(a b c)"))
   }  
 
   @Test def testProustParserDenotation(): Unit = {
@@ -198,12 +198,12 @@ class ProustParserTests {
   @Test def testProustParserArrow(): Unit = { 
     assertEquals( Arr(Den("A"),Den("B"))               , run(arrow)("(A -> B)"))
     assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> (B -> C))"))
-    // human readable form employing the observation that application is right-associative
-    assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> B -> C)"))
   }  
 
   @Test def testProustParserTyp(): Unit = { 
     assertEquals( Den("A")               , run(typ)("A"))
     assertEquals( Arr(Den("A"),Den("B")) , run(typ)("(A -> B)"))
+    // human readable form employing the observation that application is right-associative
+    assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(typ)("(A -> B -> C)"))
   }  
 }

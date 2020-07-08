@@ -29,11 +29,11 @@ object parser {
 
   def application: P[Exp] =
     for { 
-      _ <- reserved("(")
-      f <- expression
-      x <- expression
-      _ <- reserved(")")
-    } yield App(f, x)
+      _  <- reserved("(") 
+      e1 <- expression
+      e2 <- expression
+      _  <- reserved(")")
+    } yield App(e1, e2)
 
   def lambda: P[Exp] =
     for {
@@ -53,8 +53,18 @@ object parser {
       _ <- reserved(")")
     } yield Ann(e, t)
 
+  def apprep: P[Exp] = {
+    for {
+      _  <- reserved("(")
+      e1 <- expression
+      e2 <- expression
+      es  <- expression.oneOrMore
+      _  <- reserved(")")
+    } yield es.foldLeft(App(e1,e2))((a,e) => App(a, e))
+  }
+
   def expression: P[Exp] =
-    lambda |!| application |!| symbol |!| annotation
+    lambda |!| application |!| symbol |!| annotation |!| apprep
 
   def denotation: P[Den] =
     token(typeName).map(n => Den(n))
@@ -68,8 +78,27 @@ object parser {
       _ <- reserved(")")
     } yield Arr(f, t)
 
+  def arrowrep: P[Typ] = {
+
+    def rassoc(l: List[Typ]): Typ =
+      l.reverse match {
+        case l :: f :: previous => previous.foldLeft(Arr(f, l))((a,e) => Arr(e,a))
+        case l                  => sys.error(s"Not enough results: $l")
+      }
+
+    for { 
+      _  <- reserved("(")
+      t1 <- typ
+      _  <- reserved("->")
+      t2 <- typ
+      _  <- reserved("->")
+      r  <- seperated("->", typ)
+      _  <- reserved(")")
+    } yield rassoc(t1 :: t2 :: r)
+  }
+
   def typ: P[Typ] =
-    arrow |!| denotation
+    arrow |!| arrowrep |!| denotation
 
   def parseExpr(s: String): Exp =
     run(expression)(s)

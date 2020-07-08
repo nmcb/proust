@@ -53,13 +53,13 @@ case class P[+A](parse: String => List[(A,String)]) {
 
   private def rest(s: String, acc: List[A]): (List[A], String) =
     parse(s) match {
-      case Nil => (acc.reverse, s)
+      case Nil          => (acc.reverse, s)
       case List((a,ss)) => rest(ss, a :: acc)
       case l            => sys.error(s"Multiple results: ${l}")
     }
 
   def oneOrMore: P[List[A]] =
-    P(s => for { (a,s1) <- parse(s) } yield rest(s1, List(a)))
+    P(s => for { (a,ss) <- parse(s) } yield rest(ss, List(a)))
     
   def zeroOrMore: P[List[A]] =
     P(s => List(rest(s, Nil)) )
@@ -114,7 +114,11 @@ object P {
     for { s <- string("-") |!| unit("") ; r <- digit.oneOrMore } yield (s + r.mkString).toInt
 
   def parens[A](pa: P[A]): P[A] =
-    for { _ <- reserved("(") ; a <- pa ; _ <- reserved(")") } yield a 
+    for { _ <- reserved("(") ; a <- pa ; _ <- reserved(")") } yield a
+  
+  def seperated[A](sep: String, pa: P[A]): P[List[A]] =
+    for { h <- pa ; t <- (reserved(sep) |~| pa).zeroOrMore } yield (h :: t)
+  
 }
 
 object calculator {
