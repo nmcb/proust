@@ -1,5 +1,8 @@
 package proust
 
+import disjoining._
+import option._
+
 type Name = String
 
 sealed trait Exp
@@ -7,7 +10,7 @@ case class Lam(s: Sym, e: Exp) extends Exp
 case class App(f: Exp, a: Exp) extends Exp
 case class Ann(e: Exp, t: Typ) extends Exp
 case class Sym(n: Name)        extends Exp
-case class Hol(c: Int)         extends Exp
+case class Hol(c: Opt[Int])    extends Exp
 
 trait Typ 
 case class Arr(a: Typ, b: Typ) extends Typ
@@ -19,7 +22,6 @@ object parser {
 
   import sequencing._
   import Seq._
-  import disjoining._
   import parsing._
   import calculator._
   import P._
@@ -37,7 +39,7 @@ object parser {
     for {
       _ <- reserved("?")
       i <- number.zeroOrMore
-    } yield Hol(i.opt.getOrElse(0))
+    } yield Hol(i.opt)
     
   
   def application: P[Exp] =
@@ -203,6 +205,8 @@ case class State[S,A](run: S => (A,S)) {
   def flatMap[B](f: A => State[S,B]): State[S,B] =
     State(s => { val (a,ss) = run(s) ; f(a).run(ss) })
 
+  def withFilter(p: A => Boolean): scala.collection.WithFilter[A, scala.Seq] =
+    ???    
 }
 
 object State {
@@ -217,9 +221,45 @@ object assistent {
   import parser._
   import typer._
   import State._
+  import Opt._
 
-  case class Goal(current: Exp, goals: Map[Int,Typ] = Map.empty, counter: Int = 0)
+  case class Goal(current: Exp, holes: Map[Int,Typ] = Map.empty, counter: Int = 0)
 
-  def task(s: String): State[Goal, Unit] =
-    unit(Goal(Ann(Hol(0), tparse(s))))
-}
+  def task(s: String): State[Goal, Unit] = {
+    val n    = 0
+    val typ  = tparse(s)
+    val exp  = Ann(Hol(The(n)),typ)
+    val goal = Goal(exp)
+
+    State(_ => ((), goal.copy(holes = Map.empty + (n -> typ), counter = n)))
+  }
+
+  private def number(exp: Exp, ctr: Int): (Exp, Int) =
+    exp match {
+      case Lam(s,e) => {
+        val (ne,nc) = number(e, ctr)
+        (Lam(s,ne),nc)
+      }
+      case App(f,a) => {
+        val (e1,c1) = number(f, ctr)
+        val (e2,c2) = number(a, c1)
+        (App(e1, e2), c2)
+      }
+      case Sym(n)    => (Sym(n), ctr)
+      case Ann(e,t)  => {
+        val (ne,nc) = number(e, ctr) 
+        (Ann(ne, t), nc)
+      }
+      case Hol(en)    => (Hol(Opt(en.getOrElse(ctr + 1))), ctr + 1)
+    }
+  
+  def refine(n: Int, exp: String)(s: State[Goal,Unit]): State[Goal,Unit] =
+    for {
+      goal     <- s.get
+      typ      <- State.unit(goal.holes.getOrElse(n, sys.error(s"No goal: $n")))
+      e         = eparse(exp)
+      (ne, nc)  = number(e, goal.counter)
+      ng        = goal.copy(current = ne, holes = (goal.holes - nc) , nc)
+      _        <- s.set(ng)
+    } yield ()
+} 

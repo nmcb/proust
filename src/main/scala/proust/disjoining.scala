@@ -32,40 +32,54 @@ case class R[R](r: R) extends D[Nothing,R] {
 
 object option {
 
-  sealed trait Opt[+A] {
+  enum Opt[+A] {
 
-    def get: A
+    def get: A =
+      this match {
+        case Non()  => sys.error("Non.get")
+        case The(a) => a
+      }
 
-    def isEmpty: Boolean
-
+    def isEmpty: Boolean =
+      this match {
+        case Non()  => true
+        case The(a) => false
+      }
+      
     def nonEmpty: Boolean =
       !isEmpty
 
     def getOrElse[A1 >: A](a: => A1): A1 =
       if (nonEmpty) then get else a
+
+    val at: () => A =
+      () => get
+        
+    case Non[Nothing]() extends Opt[Nothing]
+    case The[A](a: A) extends Opt[A]
   }
 
-  def Non[A]: Opt[A] =
-    new Opt[A] {
+  object Opt {
 
-    def get =
-      sys.error("N.get")
+    val non: Opt[Nothing] =
+      Non()
 
-    def isEmpty: Boolean =
-      true
-  }
+    def empty[A]: Opt[A] =
+      Non()
 
-  def The[A](a: => A) : Opt[A] =
-    new Opt[A] {
+    def unit[A](a: A): Opt[A] =
+      The(a)
 
-      val at: () => A =
-        () => a
+    // scala library converstions
 
-      def get: A =
-        at()
+    def apply[A](a: A): Opt[A] =
+      unit(a)
 
-      def isEmpty: Boolean =
-        false
+    def unapply[A](oa: Opt[A]): Option[A] =
+      oa match {
+        case The(a) => Some(a)
+        case Non()  => None
+      }
   }
 }
 }

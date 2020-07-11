@@ -165,7 +165,7 @@ class ProustParserTests {
   }
 
   @Test def testProustParserHole(): Unit = {
-    assertEquals( Hol(0) , run(hole)("?"))
+    assertEquals( Hol(Opt.non) , run(hole)("?"))
   }
 
   @Test def testProustParserApplication(): Unit = {

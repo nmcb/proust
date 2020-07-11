@@ -15,8 +15,8 @@ enum Seq[+A] {
 
   def opt: Opt[A] =
     this match {
-      case End()    => Non
-      case Cel(a,r) => The(a)
+      case End()    => Opt.non
+      case Cel(a,r) => Opt(a)
     }
 
   def r: Seq[A] =
