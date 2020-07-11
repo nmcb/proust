@@ -223,15 +223,23 @@ object assistent {
   import State._
   import Opt._
 
-  case class Goal(current: Exp, holes: Map[Int,Typ] = Map.empty, counter: Int = 0)
+  type Holes = Map[Int,Seq[(Typ,Ctx)]]
+  object Holes {
+    def empty: Holes = Map.empty
+  }
+
+  case class Goal(current: Exp, holes: Holes = Holes.empty, counter: Int = 0)
 
   def task(s: String): State[Goal, Unit] = {
-    val n    = 0
-    val typ  = tparse(s)
-    val exp  = Ann(Hol(The(n)),typ)
-    val goal = Goal(exp)
 
-    State(_ => ((), goal.copy(holes = Map.empty + (n -> typ), counter = n)))
+    def initialCtxFor(n: Int, t: Typ): Holes =
+      Map(n -> Seq(t -> Map.empty))
+
+    val ctr  = 0
+    val typ  = tparse(s)
+    val exp  = Ann(Hol(The(ctr)),typ)
+
+    State(_ => ((), Goal(exp, initialCtxFor(ctr, typ), ctr)))
   }
 
   private def number(exp: Exp, ctr: Int): (Exp, Int) =
@@ -250,16 +258,18 @@ object assistent {
         val (ne,nc) = number(e, ctr) 
         (Ann(ne, t), nc)
       }
-      case Hol(en)    => (Hol(Opt(en.getOrElse(ctr + 1))), ctr + 1)
+      case Hol(en) => (Hol(Opt(en.getOrElse(ctr + 1))), ctr + 1)
     }
   
   def refine(n: Int, exp: String)(s: State[Goal,Unit]): State[Goal,Unit] =
     for {
-      goal     <- s.get
-      typ      <- State.unit(goal.holes.getOrElse(n, sys.error(s"No goal: $n")))
-      e         = eparse(exp)
-      (ne, nc)  = number(e, goal.counter)
-      ng        = goal.copy(current = ne, holes = (goal.holes - nc) , nc)
-      _        <- s.set(ng)
+      goal       <- s.get
+      Seq((t,c))  = goal.holes.getOrElse(n, sys.error(s"No goal: $n"))
+      // association list !!!
+      e           = eparse(exp)
+      a           = check(c, e, t)
+      (ne, nc)    = number(e, goal.counter)
+      ng          = goal.copy(current = ne, holes = (goal.holes - nc) , nc)
+      _          <- s.set(ng)
     } yield ()
 } 
