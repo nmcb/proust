@@ -2,7 +2,9 @@ package proust
 
 object parsing {
 
-case class P[+A](parse: String => List[(A,String)]) {
+import sequencing._
+
+case class P[+A](parse: String => Seq[(A,String)]) {
 
   def identity: P[A] =
     this
@@ -17,7 +19,7 @@ case class P[+A](parse: String => List[(A,String)]) {
     P.fail
 
   def bind[B](f: A => P[B]): P[B] =
-    P(s => parse(s).map((a,ss) => f(a).parse(ss)).fold(Nil)(_ ++ _))
+    P(s => parse(s).map((a,ss) => f(a).parse(ss)).foldl(Seq.empty)(r => rs => r ++ rs))
 
   def flatMap[B](f: A => P[B]): P[B] =
     bind(f)
@@ -26,12 +28,13 @@ case class P[+A](parse: String => List[(A,String)]) {
     P(s => parse(s).map((a, ss) => (f(a), ss)))
 
   def ap[B](ff: P[A => B]): P[B] =
-    P(s => for { (f, s1) <- ff.parse(s) ; (a, s2) <- parse(s1) } yield (f(a), s2))
+    P(s => ff.parse(s).flatMap((f,s1) => parse(s1).map((a,s2) => (f(a),s2))))
+    // P(s => for { (f, s1) <- ff.parse(s) ; (a, s2) <- parse(s1) } yield (f(a), s2))
 
   def |!|[A1 >: A](that: => P[A1]): P[A1] =
     P(s => parse(s) match {
-      case Nil => that.parse(s)
-      case res: List[(A1, String)] => res
+      case Seq.end => that.parse(s)
+      case res: Seq[(A1, String)] => res
     })
 
   def |&|[A1 >: A](that: P[A1]): P[A1] =
@@ -41,7 +44,8 @@ case class P[+A](parse: String => List[(A,String)]) {
     for { _ <- this ; b <- that } yield b
     
   def foldl[B](b: B)(f: B => A => B): P[B] =
-    P(s => for { (a,s1) <- parse(s) } yield (f(b)(a), s1))
+    P(s => parse(s).bind((a,ss) => Seq((f(b)(a),ss))))
+    // P(s => for { (a,s1) <- parse(s) } yield (f(b)(a), s1))
 
   def chainl[A1 >: A](pf: P[A1 => A1 => A1])(a: A1): P[A1] =
     chainl1(pf) |!| unit(a)
@@ -51,37 +55,37 @@ case class P[+A](parse: String => List[(A,String)]) {
     for { a <- this ; r <- rest(a) } yield r
   }
 
-  private def rest(s: String, acc: List[A]): (List[A], String) =
+  private def rest(s: String, acc: Seq[A] = Seq.empty): (Seq[A], String) =
     parse(s) match {
-      case Nil          => (acc.reverse, s)
-      case List((a,ss)) => rest(ss, a :: acc)
-      case l            => sys.error(s"Multiple results: ${l}")
+      case Seq.end     => (acc.reverse, s)
+      case Seq((a,ss)) => rest(ss, a :: acc)
+      case l           => sys.error(s"Multiple results: ${l}")
     }
 
-  def oneOrMore: P[List[A]] =
-    P(s => for { (a,ss) <- parse(s) } yield rest(ss, List(a)))
+  def oneOrMore: P[Seq[A]] =
+    P(s => parse(s).bind((a,ss) => Seq(rest(ss, Seq(a)))))
     
-  def zeroOrMore: P[List[A]] =
-    P(s => List(rest(s, Nil)) )
+  def zeroOrMore: P[Seq[A]] =
+    P(s => Seq(rest(s)))
 }
 
 object P {
 
   def run[A](p: P[A])(s: String): A =
     p.parse(s) match {
-      case List((a, "")) => a
-      case List((_, rs)) => sys.error(s"Unconsumed: $rs")
-      case e             => sys.error(s"Parser error: $e")
+      case Seq((a, "")) => a
+      case Seq((_, rs)) => sys.error(s"Unconsumed: $rs")
+      case e            => sys.error(s"Parser error: $e")
     }
 
   def unit[A](a: A): P[A] = 
-    P(s => List((a, s)))
+    P(s => Seq((a, s)))
   
   def item: P[Char] =
-    P(s => if (s.length == 0) Nil else List((s.head, s.tail)))
+    P(s => if (s.length == 0) Seq.empty else Seq((s.head, s.tail)))
 
   def fail[A]: P[A] =
-    P(_ => Nil)
+    P(_ => Seq.empty)
 
   def combine[A](l: P[A], r: P[A]): P[A] =
     l |&| r
@@ -116,7 +120,7 @@ object P {
   def parens[A](pa: P[A]): P[A] =
     for { _ <- reserved("(") ; a <- pa ; _ <- reserved(")") } yield a
   
-  def seperated[A](sep: String, pa: P[A]): P[List[A]] =
+  def seperated[A](sep: String, pa: P[A]): P[Seq[A]] =
     for { h <- pa ; t <- (reserved(sep) |~| pa).zeroOrMore } yield (h :: t)
   
 }

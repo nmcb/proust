@@ -6,6 +6,7 @@ import org.junit.Assert._
 
 class ParserTests {
 
+  import sequencing._
   import parsing._
   import P._
 
@@ -22,10 +23,9 @@ class ParserTests {
     unit(x => y => if (x > y) then x else y)
 
   @Test def testChainl1(): Unit = {
-    assertEquals( '1' , run(digit.chainl1(gt))("1"))
     assertEquals( '2' , run(digit.chainl1(gt))("12"))
     assertEquals( '3' , run(digit.chainl1(gt))("123"))
-   }
+  }
 
    @Test def testChainl(): Unit = {
     assertEquals( '0' , run(digit.chainl(gt)('0'))(""))
@@ -71,13 +71,13 @@ class ParserTests {
   }
 
   @Test def testOneOrMore(): Unit = {
-    assertEquals( List('0', '1', '2') , run(digit.oneOrMore)("012"))
-    assertEquals( List('a')           , run(char('a').oneOrMore)("a"))
+    assertEquals( Seq('0')           , run(digit.oneOrMore)("0"))
+    assertEquals( Seq('0', '1', '2') , run(digit.oneOrMore)("012"))
   }
 
   @Test def testZeroOrMore(): Unit = {
-    assertEquals( List('0', '1', '2') , run(digit.zeroOrMore)("012"))
-    assertEquals( List()              , run(char('a').zeroOrMore)(""))
+    assertEquals( Seq()              , run(digit.zeroOrMore)(""))
+    assertEquals( Seq('0', '1', '2') , run(digit.zeroOrMore)("012"))
   }
 }
 
@@ -141,6 +141,7 @@ class CalculatorParserTests {
 
 class ProustParserTests {
 
+  import disjoining.option._
   import parsing._
   import P._
   import parser._
@@ -161,6 +162,10 @@ class ProustParserTests {
     assertEquals( Sym("a")   , run(symbol)("a "))
     assertEquals( Sym("ab")  , run(symbol)("ab \t"))
     assertEquals( Sym("a-b") , run(symbol)("a-b \n"))
+  }
+
+  @Test def testProustParserHole(): Unit = {
+    assertEquals( Hol(0) , run(hole)("?"))
   }
 
   @Test def testProustParserApplication(): Unit = {

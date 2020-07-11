@@ -6,12 +6,14 @@ import org.junit.Assert._
 
 class ProustTests {
 
-import parsing._
 import parser._
 import typer._
 
-  def proof(p: String): Unit =
-    synth(Map.empty, parse(p))
+  def proof(p: String): Boolean =
+    scala.util
+      .Try(synth(Map.empty, eparse(p)))
+      .map(_ => true)
+      .getOrElse(false)
 
   @Test def testProof(): Unit =
     proof("((λ x => (λ y => x)) : (A -> (B -> A)))")

@@ -32,7 +32,7 @@ case class R[R](r: R) extends D[Nothing,R] {
 
 object option {
 
-  sealed trait O[A] {
+  sealed trait Opt[+A] {
 
     def get: A
 
@@ -41,12 +41,12 @@ object option {
     def nonEmpty: Boolean =
       !isEmpty
 
-    def getOrElse(a: => A): A =
+    def getOrElse[A1 >: A](a: => A1): A1 =
       if (nonEmpty) then get else a
   }
 
-  def N[A]: O[A] =
-    new O[A] {
+  def Non[A]: Opt[A] =
+    new Opt[A] {
 
     def get =
       sys.error("N.get")
@@ -55,8 +55,8 @@ object option {
       true
   }
 
-  def S[A](a: => A) : O[A] =
-    new O[A] {
+  def The[A](a: => A) : Opt[A] =
+    new Opt[A] {
 
       val at: () => A =
         () => a

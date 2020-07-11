@@ -7,17 +7,21 @@ case class Lam(s: Sym, e: Exp) extends Exp
 case class App(f: Exp, a: Exp) extends Exp
 case class Ann(e: Exp, t: Typ) extends Exp
 case class Sym(n: Name)        extends Exp
+case class Hol(c: Int)         extends Exp
 
 trait Typ 
 case class Arr(a: Typ, b: Typ) extends Typ
 case class Den(n: Name)        extends Typ
 
-type Ctx = Map[Sym,Typ]
+type Ctx = Map[String,Typ]
 
 object parser {
 
+  import sequencing._
+  import Seq._
   import disjoining._
   import parsing._
+  import calculator._
   import P._
 
   def name: P[Name] =
@@ -29,6 +33,13 @@ object parser {
   def symbol[S >: Sym]: P[S] =
     token(name).map(n => Sym(n))
 
+  def hole: P[Hol] =
+    for {
+      _ <- reserved("?")
+      i <- number.zeroOrMore
+    } yield Hol(i.opt.getOrElse(0))
+    
+  
   def application: P[Exp] =
     for { 
       _  <- reserved("(") 
@@ -60,13 +71,13 @@ object parser {
       _  <- reserved("(")
       e1 <- expression
       e2 <- expression
-      es  <- expression.oneOrMore
+      es <- expression.oneOrMore
       _  <- reserved(")")
-    } yield es.foldLeft(App(e1,e2))((a,e) => App(a, e))
+    } yield es.foldl(App(e1,e2))(a => e => App(a, e))
   }
 
   def expression: P[Exp] =
-    lambda |!| application |!| symbol |!| annotation |!| apprep
+    lambda |!| application |!| hole |!| symbol |!| annotation |!| apprep
 
   def denotation: P[Den] =
     token(typeName).map(n => Den(n))
@@ -82,9 +93,9 @@ object parser {
 
   def arrrep: P[Typ] = {
 
-    def rightAssoc(ts: List[Typ]): Typ =
+    def rassoc(ts: Seq[Typ]): Typ =
       ts.reverse match {
-        case a1 :: a2 :: tail => tail.foldLeft(Arr(a2, a1))((a,e) => Arr(e,a))
+        case Cel(a1,Cel(a2,r)) => r.foldl(Arr(a2, a1))(a => e => Arr(e,a))
         case _                => sys.error("boom!")
       }
 
@@ -96,54 +107,59 @@ object parser {
       _  <- reserved("->")
       r  <- seperated("->", typ)
       _  <- reserved(")")
-    } yield rightAssoc(t1 :: t2 :: r)
+    } yield rassoc(t1 :: t2 :: r)
   }
 
   def typ: P[Typ] =
     arrow |!| arrrep |!| denotation
 
-  def parse(s: String): Exp =
+  def eparse(s: String): Exp =
     run(expression)(s)
+
+  def tparse(s: String): Typ =
+    run(typ)(s)
 }
 
 object printer {
 
-  def print(e: Exp): String =
+  def pprint(e: Exp): String =
     e match {
-      case Lam(s,e) => s"(λ ${print(s)} => ${print(e)})"
-      case App(f,a) => s"(${print(f)} ${print(a)})"
+      case Lam(s,e) => s"(λ ${pprint(s)} => ${pprint(e)})"
+      case App(f,a) => s"(${pprint(f)} ${pprint(a)})"
+      case Hol(i)   => s"?$i"
       case Sym(n)   => n
-      case Ann(e,t) => s"(${print(e)} : ${print(t)})"
+      case Ann(e,t) => s"(${pprint(e)} : ${pprint(t)})"
     }
 
-  def print(t: Typ): String =
+  def pprint(t: Typ): String =
     t match {
-      case Arr(a,b) => s"(${print(a)} -> ${print(b)})"
+      case Arr(a,b) => s"(${pprint(a)} -> ${pprint(b)})"
       case Den(n)   => n
     }
 
-  def print(c: Ctx): String =
-    c.map((s,t) => s"\n$s : ${print(t)}").mkString
+  def pprint(c: Ctx): String =
+    c.map((s,t) => s"\n$s : ${pprint(t)}").mkString
 }
 
 object typer {
 
-  def check(c: Ctx, e: Exp, t: Typ): Boolean = {
+  import printer._
+
+  def check(ctx: Ctx, exp: Exp, typ: Typ): Boolean = {
 
     def cerror =
       sys.error(
-        s""" Unable to check
-           |
-           | Exp: ${print(e)}
-           | Typ: ${print(t)}
-           | Ctx: ${print(c)}
+        s""" Unable to check.
+           | Exp: ${pprint(exp)}
+           | Typ: ${pprint(typ)}
+           | Ctx: ${pprint(ctx)}
         """.stripMargin)
 
-    (e,t) match {
-      case (Lam(s,e),Arr(a,b))  => check(c + (s -> a), e, b)
-      case (Lam(x,t),_)         => cerror
-      case _ if t == synth(c,e) => true
-      case _                    => cerror
+    (exp,typ) match {
+      case (Lam(s,e),Arr(a,b))         => check(ctx + (s.n -> a), e, b)
+      case (Lam(x,t),_)                => cerror
+      case _ if typ == synth(ctx, exp) => true
+      case _                           => cerror
     }
   }
 
@@ -151,22 +167,59 @@ object typer {
 
     def serror =
       sys.error(
-        s""" Unable to synth
-            |
-            | Exp: ${print(exp)}
-            | Ctx: ${print(ctx)}
+        s""" Unable to synth.
+           | Exp: ${pprint(exp)}
+           | Ctx: ${pprint(ctx)}
         """.stripMargin)
     
     exp match {
       case Lam(_,_)                         => serror
       case Ann(e,t) if check(ctx, e, t)     => t
       case App(f,x)                         =>
-        synth(ctx,f) match {
+        synth(ctx, f) match {
           case Arr(a,b) if check(ctx, x, a) => b
           case _                            => serror
         }
-      case s: Sym                           => ctx.getOrElse(s, serror)
+      case Sym(n)                           => ctx.getOrElse(n, serror)
       case _                                => serror
     }
   }
+}
+
+case class State[S,A](run: S => (A,S)) {
+
+  def get: State[S,S] =
+    State(s => (s,s))
+
+  def set(s: S): State[S,Unit] =
+    State(_ => ((),s))
+
+  def modify(f: S => S): State[S,Unit] =
+    for { s <- get ; _ <- set(f(s)) } yield ()
+
+  def map[B](f: A => B): State[S,B] =
+    flatMap(a => State(s => (f(a),s)))
+
+  def flatMap[B](f: A => State[S,B]): State[S,B] =
+    State(s => { val (a,ss) = run(s) ; f(a).run(ss) })
+
+}
+
+object State {
+
+  def unit[S,A](a: A): State[S,A] =
+    State[S,A](s => (a,s))
+
+}
+
+object assistent {
+
+  import parser._
+  import typer._
+  import State._
+
+  case class Goal(current: Exp, goals: Map[Int,Typ] = Map.empty, counter: Int = 0)
+
+  def task(s: String): State[Goal, Unit] =
+    unit(Goal(Ann(Hol(0), tparse(s))))
 }
