@@ -9,14 +9,14 @@ class PrinterTests {
   import printer._
 
   @Test def testPrintExp(): Unit = { 
-    assertEquals( "(λ a => b)" , pprint(Lam(Sym("a"),Sym("b"))))
-    assertEquals( "(a b)"      , pprint(App(Sym("a"),Sym("b"))))
-    assertEquals( "(a : A)"    , pprint(Ann(Sym("a"),Den("A"))))
-    assertEquals( "a"          , pprint(Sym("a")))
+    assertEquals( "(λ a => b)" , ppexp(Lam(Var("a"),Var("b"))))
+    assertEquals( "(a b)"      , ppexp(App(Var("a"),Var("b"))))
+    assertEquals( "(a : A)"    , ppexp(Ann(Var("a"),Den("A"))))
+    assertEquals( "a"          , ppexp(Var("a")))
   }
 
   @Test def testPrintTyp(): Unit = { 
-    assertEquals( "(A -> B)" , pprint(Arr(Den("A"),Den("B"))))
-    assertEquals( "A"        , pprint(Den("A")))
+    assertEquals( "(A -> B)" , pptyp(Arr(Den("A"),Den("B"))))
+    assertEquals( "A"        , pptyp(Den("A")))
   }
 }

@@ -158,10 +158,10 @@ class ProustParserTests {
     assertEquals( "A-B" , run(typeName)("A-B"))
   }
 
-  @Test def testProustParserSymbol(): Unit = {
-    assertEquals( Sym("a")   , run(symbol)("a "))
-    assertEquals( Sym("ab")  , run(symbol)("ab \t"))
-    assertEquals( Sym("a-b") , run(symbol)("a-b \n"))
+  @Test def testProustParserVariable(): Unit = {
+    assertEquals( Var("a")   , run(variable)("a "))
+    assertEquals( Var("ab")  , run(variable)("ab \t"))
+    assertEquals( Var("a-b") , run(variable)("a-b \n"))
   }
 
   @Test def testProustParserHole(): Unit = {
@@ -170,28 +170,28 @@ class ProustParserTests {
 
   @Test def testProustParserApplication(): Unit = {
     // formal application form
-    assertEquals( App(Sym("a"),Sym("b"))               , run(application)("(a b)"))
-    assertEquals( App(App(Sym("a"),Sym("b")),Sym("c")) , run(application)("((a b) c)"))
-    assertEquals( App(Sym("a"),App(Sym("b"),Sym("c"))) , run(application)("(a (b c))"))
+    assertEquals( App(Var("a"),Var("b"))               , run(application)("(a b)"))
+    assertEquals( App(App(Var("a"),Var("b")),Var("c")) , run(application)("((a b) c)"))
+    assertEquals( App(Var("a"),App(Var("b"),Var("c"))) , run(application)("(a (b c))"))
   }  
 
   @Test def testProustParserLambda(): Unit = {
-    assertEquals( Lam(Sym("a"),Sym("b"))               , run(lambda)("(λ a => b)"))
-    assertEquals( Lam(Sym("a"),Lam(Sym("b"),Sym("c"))) , run(lambda)("(λ a => (λ b => c))"))
+    assertEquals( Lam(Var("a"),Var("b"))               , run(lambda)("(λ a => b)"))
+    assertEquals( Lam(Var("a"),Lam(Var("b"),Var("c"))) , run(lambda)("(λ a => (λ b => c))"))
   }  
 
   @Test def testProustParserAnnotation(): Unit = {
-    assertEquals( Ann(Sym("a"),Den("A")) , run(annotation)("(a : A)"))
-    assertEquals( Ann(Sym("a"),Den("A")) , run(annotation)("(a : A)"))
+    assertEquals( Ann(Var("a"),Den("A")) , run(annotation)("(a : A)"))
+    assertEquals( Ann(Var("a"),Den("A")) , run(annotation)("(a : A)"))
   }  
 
   @Test def testProustParserExpr(): Unit = {
-    assertEquals( Lam(Sym("a"),Sym("b")) , run(expression)("(λ a => b)"))
-    assertEquals( App(Sym("a"),Sym("b")) , run(expression)("(a  b)"))
-    assertEquals( Sym("a")               , run(expression)("a"))
-    assertEquals( Ann(Sym("a"),Den("A")) , run(expression)("(a : A)"))
+    assertEquals( Lam(Var("a"),Var("b")) , run(expression)("(λ a => b)"))
+    assertEquals( App(Var("a"),Var("b")) , run(expression)("(a  b)"))
+    assertEquals( Var("a")               , run(expression)("a"))
+    assertEquals( Ann(Var("a"),Den("A")) , run(expression)("(a : A)"))
     // human readable form employing the observation that application is left-associative
-    assertEquals( App(App(Sym("a"),Sym("b")),Sym("c")) , run(expression)("(a b c)"))
+    assertEquals( App(App(Var("a"),Var("b")),Var("c")) , run(expression)("(a b c)"))
   }  
 
   @Test def testProustParserDenotation(): Unit = {

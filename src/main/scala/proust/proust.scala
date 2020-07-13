@@ -3,20 +3,56 @@ package proust
 import disjoining._
 import option._
 
+// expressions
+
 type Name = String
 
 sealed trait Exp
+sealed trait Sym extends Exp {
+  def n: Name
+}
 case class Lam(s: Sym, e: Exp) extends Exp
-case class App(f: Exp, a: Exp) extends Exp
+case class App(f: Exp, x: Exp) extends Exp
 case class Ann(e: Exp, t: Typ) extends Exp
-case class Sym(n: Name)        extends Exp
-case class Hol(c: Opt[Int])    extends Exp
+case class Var(n: Name)        extends Sym
+case class Hol(i: Opt[Int])    extends Sym {
+
+  def n: Name =
+    s"?${i.getOrElse("")}"
+}
+
+// types
 
 trait Typ 
 case class Arr(a: Typ, b: Typ) extends Typ
 case class Den(n: Name)        extends Typ
 
-type Ctx = Map[String,Typ]
+// context
+
+type Ctx = Map[Sym,Typ]
+
+object Ctx {
+
+  def empty: Ctx =
+    Map.empty
+}
+
+type Holes = Map[Int,(Typ,Ctx)]
+
+object Holes {
+
+  def empty: Holes =
+    Map.empty
+
+  def init(nr: Int, typ: Typ): Holes =
+    Map(nr -> (typ,Map.empty))
+}
+
+case class Goal( current  : Exp
+               , holes    : Holes
+               , counter  : Int
+               , isSolved : Boolean = false
+               )
 
 object parser {
 
@@ -32,14 +68,11 @@ object parser {
   def typeName: P[Name] =
     oneOf("ABCDEFGHIJKLMNOPQRSTUVWXYZ-").oneOrMore.map(_.mkString)
 
-  def symbol[S >: Sym]: P[S] =
-    token(name).map(n => Sym(n))
+  def variable[V >: Var]: P[V] =
+    token(name).map(n => Var(n))
 
   def hole: P[Hol] =
-    for {
-      _ <- reserved("?")
-      i <- number.zeroOrMore
-    } yield Hol(i.opt)
+    for { _ <- reserved("?") ; i <- number.zeroOrMore } yield Hol(i.opt)
     
   
   def application: P[Exp] =
@@ -53,7 +86,7 @@ object parser {
   def lambda: P[Exp] =
     for {
       _ <- reserved("(λ")
-      s <- symbol
+      s <- variable
       _ <- reserved("=>")
       e <- expression
       _ <- reserved(")")
@@ -79,7 +112,7 @@ object parser {
   }
 
   def expression: P[Exp] =
-    lambda |!| application |!| hole |!| symbol |!| annotation |!| apprep
+    lambda |!| application |!| hole |!| variable |!| annotation |!| apprep
 
   def denotation: P[Den] =
     token(typeName).map(n => Den(n))
@@ -98,7 +131,7 @@ object parser {
     def rassoc(ts: Seq[Typ]): Typ =
       ts.reverse match {
         case Cel(a1,Cel(a2,r)) => r.foldl(Arr(a2, a1))(a => e => Arr(e,a))
-        case _                => sys.error("boom!")
+        case _                 => sys.error("boom!")
       }
 
     for { 
@@ -124,66 +157,85 @@ object parser {
 
 object printer {
 
-  def pprint(e: Exp): String =
+  def ppexp(e: Exp): String =
     e match {
-      case Lam(s,e) => s"(λ ${pprint(s)} => ${pprint(e)})"
-      case App(f,a) => s"(${pprint(f)} ${pprint(a)})"
-      case Hol(i)   => s"?$i"
-      case Sym(n)   => n
-      case Ann(e,t) => s"(${pprint(e)} : ${pprint(t)})"
+      case Lam(s,e) => s"(λ ${ppexp(s)} => ${ppexp(e)})"
+      case App(f,a) => s"(${ppexp(f)} ${ppexp(a)})"
+      case Hol(oi)  => s"?${oi.getOrElse("")}"
+      case Var(n)   => n
+      case Ann(e,t) => s"(${ppexp(e)} : ${pptyp(t)})"
     }
 
-  def pprint(t: Typ): String =
+  def pptyp(t: Typ): String =
     t match {
-      case Arr(a,b) => s"(${pprint(a)} -> ${pprint(b)})"
+      case Arr(a,b) => s"(${pptyp(a)} -> ${pptyp(b)})"
       case Den(n)   => n
     }
 
-  def pprint(c: Ctx): String =
-    c.map((s,t) => s"\n$s : ${pprint(t)}").mkString
+  def ppctx(c: Ctx): String = 
+    c.map((s,t) => s"\n${s.n} : ${pptyp(t)}").mkString
 }
 
 object typer {
 
   import printer._
+  import Opt._
 
-  def check(ctx: Ctx, exp: Exp, typ: Typ): Boolean = {
+  def check(ctx: Ctx, exp: Exp, typ: Typ, ref: Boolean = false): (Boolean,Ctx) = {
 
-    def cerror =
-      sys.error(
-        s""" Unable to check.
-           | Exp: ${pprint(exp)}
-           | Typ: ${pprint(typ)}
-           | Ctx: ${pprint(ctx)}
-        """.stripMargin)
+    def cerror(msg: String = "Unable to check.") = 
+      sys.error(cinfo(msg))
+
+    def cinfo(msg: String = ""): String =
+      s"""CHECK ${if (ref) then "[refining] " + msg else msg}
+         |Exp: ${ppexp(exp)}
+         |Typ: ${pptyp(typ)}
+         |Ctx: ${ppctx(ctx)}
+      """.stripMargin
+
+    // println(cinfo())
 
     (exp,typ) match {
-      case (Lam(s,e),Arr(a,b))         => check(ctx + (s.n -> a), e, b)
-      case (Lam(x,t),_)                => cerror
-      case _ if typ == synth(ctx, exp) => true
-      case _                           => cerror
+      case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
+      case ( Lam(x,t) , _        ) => cerror()
+      case ( Hol(oa)  , _        ) =>
+        if   (ref)
+        then
+          if (oa.nonEmpty) 
+          then { println(s"\n\nTYPE: $typ\n\n") ; (true, ctx + (Hol(oa) -> typ)) }
+          else cerror("No hole number.")
+        else (true, ctx)
+      case _  => 
+        if (typ == synth(ctx, exp, ref))
+        then (true, ctx)
+        else cerror()
     }
   }
 
-  def synth(ctx: Ctx, exp: Exp): Typ = {
+  def synth(ctx: Ctx, exp: Exp, ref: Boolean = false): Typ = {
 
-    def serror =
-      sys.error(
-        s""" Unable to synth.
-           | Exp: ${pprint(exp)}
-           | Ctx: ${pprint(ctx)}
-        """.stripMargin)
-    
+    def serror(msg: String = "Unable to synth.") = 
+      sys.error(sinfo(msg))
+
+    def sinfo(msg: String = ""): String =
+      s"""SYNTH ${if (ref) then "[refining] " + msg else msg}
+         |Exp: ${ppexp(exp)}
+         |Ctx: ${ppctx(ctx)}
+       """.stripMargin
+
+    // println(sinfo())
+
     exp match {
-      case Lam(_,_)                         => serror
-      case Ann(e,t) if check(ctx, e, t)     => t
-      case App(f,x)                         =>
+      case Lam(_,_)                                 => serror()
+      case Hol(n)                                   => serror()
+      case Ann(e,t) if check(ctx, e, t, ref)._1     => t
+      case App(f,x)                                 =>
         synth(ctx, f) match {
-          case Arr(a,b) if check(ctx, x, a) => b
-          case _                            => serror
+          case Arr(a,b) if check(ctx, x, a, ref)._1 => b
+          case _                                    => serror()
         }
-      case Sym(n)                           => ctx.getOrElse(n, serror)
-      case _                                => serror
+      case Var(n)                                   => ctx.getOrElse(Var(n), serror())
+      case _                                        => serror()
     }
   }
 }
@@ -220,29 +272,18 @@ object assistent {
 
   import parser._
   import typer._
+  import printer._
   import State._
   import Opt._
 
-  type Holes = Map[Int,Seq[(Typ,Ctx)]]
-  object Holes {
-    def empty: Holes = Map.empty
+  def task(typ: String): Goal = {
+    val n = 0
+    val t = tparse(typ)
+    val e = Ann(Hol(The(n)),t)
+    Goal(e, Holes.init(n, t), n + 1)
   }
 
-  case class Goal(current: Exp, holes: Holes = Holes.empty, counter: Int = 0)
-
-  def task(s: String): State[Goal, Unit] = {
-
-    def initialCtxFor(n: Int, t: Typ): Holes =
-      Map(n -> Seq(t -> Map.empty))
-
-    val ctr  = 0
-    val typ  = tparse(s)
-    val exp  = Ann(Hol(The(ctr)),typ)
-
-    State(_ => ((), Goal(exp, initialCtxFor(ctr, typ), ctr)))
-  }
-
-  private def number(exp: Exp, ctr: Int): (Exp, Int) =
+  def number(exp: Exp, ctr: Int): (Exp, Int) =
     exp match {
       case Lam(s,e) => {
         val (ne,nc) = number(e, ctr)
@@ -253,23 +294,64 @@ object assistent {
         val (e2,c2) = number(a, c1)
         (App(e1, e2), c2)
       }
-      case Sym(n)    => (Sym(n), ctr)
-      case Ann(e,t)  => {
+      case Var(n) =>
+        (Var(n), ctr)
+      case Ann(e,t) => {
         val (ne,nc) = number(e, ctr) 
         (Ann(ne, t), nc)
       }
-      case Hol(en) => (Hol(Opt(en.getOrElse(ctr + 1))), ctr + 1)
+      case Hol(en) =>
+        (Hol(Opt(en.getOrElse(ctr))), ctr + 1)
     }
+
+  def replace(nr: Int, rep: Exp, exp: Exp): Exp =
+    exp match {
+      case Lam(s,e)    => Lam(s, replace(nr, rep, e))
+      case App(f,a)    => App(replace(nr, rep, f), replace(nr, rep, a))
+      case Var(n)      => Var(n)
+      case Ann(e,t)    => Ann(replace(nr, rep, e), t)
+      case Hol(The(n)) => if (n == nr) then rep else Hol(The(n))
+      case Hol(non)    => sys.error(s"Unnumbered hole in expression: $exp")
+    }
+
+  def pptask(t: Exp): String =
+    s"${printer.ppexp(t)}\n"
   
-  def refine(n: Int, exp: String)(s: State[Goal,Unit]): State[Goal,Unit] =
-    for {
-      goal       <- s.get
-      Seq((t,c))  = goal.holes.getOrElse(n, sys.error(s"No goal: $n"))
-      // association list !!!
-      e           = eparse(exp)
-      a           = check(c, e, t)
-      (ne, nc)    = number(e, goal.counter)
-      ng          = goal.copy(current = ne, holes = (goal.holes - nc) , nc)
-      _          <- s.set(ng)
-    } yield ()
-} 
+  def ppholes(holes: Holes): String =
+    holes
+      .map({case (n,(t,c)) => s"Goal $n has type ${pptyp(t)} in context ${ppctx(c)}"})
+      .mkString
+  
+  def ppgoal(g: Goal): String =
+    s"""Task with ${g.holes.keys.size} goal${if (g.holes.keys.size > 1) "s" else ""} is now
+        |${ppexp(g.current)}
+        |${ppholes(g.holes)}
+      """.stripMargin
+
+  def refine(hole: Int, exp: String): State[Goal,Goal] = {
+
+    State(goal => {
+      println("PRE REFINE:\n" + ppgoal(goal))
+
+      val (t,c)    = goal.holes.getOrElse(hole, sys.error(s"No hole: $hole"))
+      val e        = eparse(exp)
+      val _        = check(c, e, t)
+      val (ne, nc) = number(e, goal.counter)
+      val (_, ctx) = check(c, ne, t, ref = true)
+      if (nc != hole+1) {
+        val nhole    = (hole+1) -> (ctx(Hol(The(hole+1))) ->  ctx)
+        println(s"NEW HOLE: $nhole")
+        val nexp   = replace(hole, ne, goal.current)
+        val nholes = goal.holes - hole + nhole
+        println(s"HOLES: $nholes")
+        val ngoal  = goal.copy(nexp, nholes, nc)
+        println("POST REFINE:\n" + ppgoal(ngoal))
+        (ngoal,ngoal)
+      } else {
+        val ngoal = goal.copy(ne, Holes.empty, -1, true)
+        (ngoal,ngoal)
+      }
+  
+    })
+  }
+}
