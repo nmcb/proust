@@ -45,14 +45,35 @@ object Holes {
     Map.empty
 
   def init(nr: Int, typ: Typ): Holes =
-    Map(nr -> (typ,Map.empty))
+    Map(nr -> (typ -> Map.empty))
 }
 
 case class Goal( current  : Exp
                , holes    : Holes
-               , counter  : Int
-               , isSolved : Boolean = false
+               , nextNr   : Int
+               , isSolved : Boolean
                )
+
+object Goal {
+
+    import Opt._
+    import parser._
+
+    def apply(task: String): Goal = {
+      
+      val hypothesis: Typ =
+        tparse(task)
+
+      val proof: Exp =
+        Ann(Hol(The(0)), hypothesis)
+      
+      Goal( current  = proof
+          , holes    = Holes.init(0, hypothesis)
+          , nextNr   = 1
+          , isSolved = false
+          )
+    }
+}
 
 object parser {
 
@@ -276,13 +297,6 @@ object assistent {
   import State._
   import Opt._
 
-  def task(typ: String): Goal = {
-    val n = 0
-    val t = tparse(typ)
-    val e = Ann(Hol(The(n)),t)
-    Goal(e, Holes.init(n, t), n + 1)
-  }
-
   def number(exp: Exp, ctr: Int): (Exp, Int) =
     exp match {
       case Lam(s,e) => {
@@ -330,13 +344,15 @@ object assistent {
 
   def refine(hole: Int, exp: String): State[Goal,Goal] = {
 
+    val refinement: Exp =
+      eparse(exp) 
+
     State(goal => {
       println("PRE REFINE:\n" + ppgoal(goal))
 
       val (t,c)    = goal.holes.getOrElse(hole, sys.error(s"No hole: $hole"))
-      val e        = eparse(exp)
-      val _        = check(c, e, t)
-      val (ne, nc) = number(e, goal.counter)
+      val _        = check(c, refinement, t)
+      val (ne, nc) = number(refinement, goal.nextNr)
       val (_, ctx) = check(c, ne, t, ref = true)
       if (nc != hole+1) {
         val nhole    = (hole+1) -> (ctx(Hol(The(hole+1))) ->  ctx)
