@@ -51,15 +51,10 @@ class ProustTests {
 
     val proof: State[Goal,Unit] =
       (for {
-        _  <- printer.pprint
         g1 <- refine( 0 , "(λ x => ?)" )
-        _  <- printer.pprint
         g2 <- refine( 1 , "(λ y => ?)" )
-        _  <- printer.pprint
         g3 <- refine( 2 , "(λ z => ?)" )
-        _  <- printer.pprint
         g4 <- refine( 3 , "((x z) (y z))" )
-        _  <- printer.pprint
 
         _  <- State.unit(assert(g4.isSolved))
         } yield ())
@@ -73,17 +68,11 @@ class ProustTests {
 
     val proof: State[Goal,Unit] =
       (for {
-        _  <- printer.pprint
         g1 <- refine( 0 , "(λ x => ?)" )
-        _  <- printer.pprint
         g2 <- refine( 1 , "(λ y => ?)" )
-        _  <- printer.pprint
         g3 <- refine( 2 , "(λ z => ?)" )
-        _  <- printer.pprint
         g4 <- refine( 3 , "(λ w => ?)" )
-        _  <- printer.pprint
         g5 <- refine( 4 , "(y z)" )
-        _  <- printer.pprint
 
         _  <- State.unit(assert(g5.isSolved))
         } yield ())
@@ -97,15 +86,10 @@ class ProustTests {
 
     val proof: State[Goal,Unit] =
       (for {
-        _  <- printer.pprint
         g1 <- refine( 0 , "(λ x => ?)" )
-        _  <- printer.pprint
         g2 <- refine( 1 , "(λ y => ?)" )
-        _  <- printer.pprint
         g3 <- refine( 2 , "(λ z => ?)" )
-        _  <- printer.pprint
         g4 <- refine( 3 , "(x (y z))" )
-        _  <- printer.pprint
 
         _  <- State.unit(assert(g4.isSolved))
         } yield ())

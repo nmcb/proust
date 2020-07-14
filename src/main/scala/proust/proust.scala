@@ -257,8 +257,6 @@ object typer {
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
-    println(cinfo("!!! "))
-
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
       case ( Lam(x,t) , _        ) => cerror()
@@ -281,8 +279,6 @@ object typer {
          |exp: ${ppexp(exp)}
          |ctx: ${ppctx(ctx)}
        """.stripMargin
-
-    println(sinfo("!!! "))
 
     exp match {
       case Lam(_,_)                                 => serror()
