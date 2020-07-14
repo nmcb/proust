@@ -1,8 +1,5 @@
 package proust
 
-import disjoining._
-import option._
-
 // expressions
 
 type Name = String
@@ -24,10 +21,13 @@ case class Hol(n: Name = "")   extends Sym {
     if (!isEmpty) n.toInt else sys.error("nr on empty hole")
 }
 
-object Hol {
+case object Hol {
 
   def apply(i: Int): Hol =
     Hol(i.toString)
+
+  def empty: Hol =
+    Hol("")
 }
 
 // types
@@ -67,7 +67,6 @@ object Goal {
 
     import parser._
     import Holes._
-    import Opt._
 
     def apply(task: String): Goal = {
       
@@ -210,24 +209,26 @@ object printer {
   
   def ppholes(holes: Holes): String =
     holes
-      .map({case (n,(t,c)) => s"Goal $n has type ${pptyp(t)} in context ${ppctx(c)}"})
+      .map({case (n,(t,c)) => s"[$n] : ${pptyp(t)} in context ${ppctx(c)}"})
       .mkString
   
-  def ppgoal(g: Goal): String =
-    s"""Goal with ${g.holes.keys.size} hole${if (g.holes.keys.size > 1) "s" else ""} is now
-        |${ppexp(g.current)}
+  def ppinfo(g: Goal): String =
+    s"""Goals [${g.holes.keys.size}] ${ppexp(g.current)}
         |${ppholes(g.holes)}
+        |${if (g.isSolved) "\nSolved." else ""}
       """.stripMargin
+
+  def pprint: State[Goal,Unit] =
+    State(g => (println(ppinfo(g)),g))
 }
 
 object typer {
 
   import printer._
-  import Opt._
 
   def check(ctx: Ctx, exp: Exp, typ: Typ, ref: Boolean = false): (Boolean,Ctx) = {
 
-    def cerror(msg: String = "Unable to check.") = 
+    def cerror(msg: String = "unable to check") = 
       sys.error(cinfo(msg))
 
     def cinfo(msg: String = ""): String =
@@ -235,7 +236,7 @@ object typer {
          |Exp: ${ppexp(exp)}
          |Typ: ${pptyp(typ)}
          |Ctx: ${ppctx(ctx)}
-      """.stripMargin
+      """.stripMargin.trim
 
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
@@ -293,7 +294,8 @@ case class State[S,A](run: S => (A,S)) {
     State(s => { val (a,ss) = run(s) ; f(a).run(ss) })
 
   def withFilter(p: A => Boolean): scala.collection.WithFilter[A, scala.Seq] =
-    ???    
+    ???
+
 }
 
 object State {
@@ -307,9 +309,7 @@ object assistent {
 
   import parser._
   import typer._
-  import printer._
   import State._
-  import Opt._
 
   def number(exp: Exp, ctr: Int): (Exp, Int) =
     exp match {
@@ -334,13 +334,19 @@ object assistent {
 
   def replace(nr: Int, rep: Exp, exp: Exp): Exp =
     exp match {
-      case Lam(s,e)    => Lam(s, replace(nr, rep, e))
-      case App(f,a)    => App(replace(nr, rep, f), replace(nr, rep, a))
-      case Var(n)      => Var(n)
-      case Ann(e,t)    => Ann(replace(nr, rep, e), t)
-      case Hol("")     => sys.error(s"unnumbered hole in expression: $exp")
-      case Hol(n)      => if (n.toInt == nr) then rep else Hol(n)
+      case Lam(s,e)  => Lam(s, replace(nr, rep, e))
+      case App(f,a)  => App(replace(nr, rep, f), replace(nr, rep, a))
+      case Var(n)    => Var(n)
+      case Ann(e,t)  => Ann(replace(nr, rep, e), t)
+      case Hol("")   => sys.error(s"unnumbered hole in expression: $exp")
+      case Hol(n)    => if (n.toInt == nr) then rep else Hol(n)
     }
+
+  def task(task: String): State[Goal,Exp] =
+    State(_ => {
+      val goal = Goal(task)
+      (goal.current , goal)
+    })
 
   def refine(hole: Int, exp: String): State[Goal,Goal] = {
 
@@ -366,4 +372,20 @@ object assistent {
       (ngoal,ngoal)
     })
   }
+}
+
+object Main extends scala.App {
+
+  import assistent._
+
+  val session: State[Goal,Unit] =
+    for {
+      g1 <- refine( 0 , "(λ x => ?)" )
+      g2 <- refine( 1 , "(λ y => ?)" )
+      g3 <- refine( 2 , "x"          )
+
+      _  <- State.unit(assert(g3.isSolved))
+    } yield ()
+
+   session.run(Goal(  "(A -> (B -> A))"))
 }

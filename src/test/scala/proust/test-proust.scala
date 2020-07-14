@@ -20,28 +20,50 @@ class ProustTests {
       .map(_ => true)
       .getOrElse(false)
 
-  @Test def testProof(): Unit =
-    proof("((λ x => (λ y => x)) : (A -> (B -> A)))")
+  // @Test def testProof(): Unit =
+  //   proof("((λ x => (λ y => x)) : (A -> (B -> A)))")
 
-  @Test def testNumber(): Unit = {
-    val exp = Lam(Var("a"),App(Hol(0),Hol(1)))
-    val fix = Lam(Var("a"),App(Hol(""),Hol("")))
-    assertEquals( (exp, 2) , number(fix, 0))
-  }
+  // @Test def testNumber(): Unit = {
+  //   val exp = Lam(Var("a"),App(Hol(0),Hol(1)))
+  //   val fix = Lam(Var("a"),App(Hol( ),Hol( )))
+  //   assertEquals( (exp, 2) , number(fix, 0))
+  // }
 
-  @Test def testRefine(): Unit = {
+  // @Test def testRefine(): Unit = {
 
-    val goal: Goal = Goal("(A -> (B -> A))" )
+  //   val hypothesis: Goal = Goal("(A -> (B -> A))" )
 
-    val session: State[Goal,Unit] =
-      for {
+  //   val proof: State[Goal,Unit] =
+  //     (for {
+  //       g1 <- refine( 0 , "(λ x => ?)" )
+  //       g2 <- refine( 1 , "(λ y => ?)" )
+  //       g3 <- refine( 2 , "x"          )
+
+  //       _  <- State.unit(assert(g3.isSolved))
+  //       } yield ())
+
+  //   proof.run(hypothesis)
+  // }
+
+  @Test def testExercise0(): Unit = {
+
+    val hypothesis: Goal = Goal("((A -> B -> C) -> (A -> B) -> (A -> C))" )
+
+    val proof: State[Goal,Unit] =
+      (for {
+        _  <- printer.pprint
         g1 <- refine( 0 , "(λ x => ?)" )
+        _  <- printer.pprint
         g2 <- refine( 1 , "(λ y => ?)" )
-        g3 <- refine( 2 , "x"          )
+        _  <- printer.pprint
+        g3 <- refine( 2 , "(λ z => ?)" )
+        _  <- printer.pprint
+        g4 <- refine( 3 , "((x z) (y z))" )
+        _  <- printer.pprint
 
-        _  <- State.unit(assert(g3.isSolved))
-        } yield ()
+        _  <- State.unit(assert(g4.isSolved))
+        } yield ())
 
-    session.run(goal)
+    proof.run(hypothesis)
   }
 }
