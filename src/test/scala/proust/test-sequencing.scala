@@ -69,4 +69,9 @@ class SequencingTests {
       b <- Seq(3,4)
     } yield (a + b))
   }
+
+  @Test def testMkString(): Unit = {
+    assertEquals( "123" , Seq(1,2,3).mkString )
+    assertEquals( "[1 2 3]" , Seq(1,2,3).mkString("["," ","]") )
+  }
 }

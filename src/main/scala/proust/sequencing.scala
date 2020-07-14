@@ -82,6 +82,9 @@ enum Seq[+A] {
   def mkString: String =
     foldl("")(b => a => b + a)
 
+  def mkString(lhs: String, sep: String, rhs: String): String =
+    s"${lhs}${foldl("")(b => a => (b + sep + a)).drop(sep.length)}${rhs}"
+
   case End[Nothing]()                                    extends Seq[Nothing]
   case Cel[A](override val a: A, override val r: Seq[A]) extends Seq[A]
 }
