@@ -45,7 +45,7 @@ class ProustTests {
     proof.run(hypothesis)
   }
 
-  @Test def testExercise0(): Unit = {
+  @Test def testExercise01(): Unit = {
 
     val hypothesis: Goal = Goal("((A -> B -> C) -> (A -> B) -> (A -> C))" )
 
@@ -62,6 +62,30 @@ class ProustTests {
         _  <- printer.pprint
 
         _  <- State.unit(assert(g4.isSolved))
+        } yield ())
+
+    proof.run(hypothesis)
+  }
+
+  @Test def testExercise02(): Unit = {
+
+    val hypothesis: Goal = Goal("((A -> B) -> (A -> C) -> (A -> B -> C))" )
+
+    val proof: State[Goal,Unit] =
+      (for {
+        _  <- printer.pprint
+        g1 <- refine( 0 , "(λ x => ?)" )
+        _  <- printer.pprint
+        g2 <- refine( 1 , "(λ y => ?)" )
+        _  <- printer.pprint
+        g3 <- refine( 2 , "(λ z => ?)" )
+        _  <- printer.pprint
+        g4 <- refine( 3 , "(λ w => ?)" )
+        _  <- printer.pprint
+        g5 <- refine( 4 , "(y z)" )
+        _  <- printer.pprint
+
+        _  <- State.unit(assert(g5.isSolved))
         } yield ())
 
     proof.run(hypothesis)

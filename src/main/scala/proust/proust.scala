@@ -257,6 +257,8 @@ object typer {
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
+    println(cinfo("!!! "))
+
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
       case ( Lam(x,t) , _        ) => cerror()
@@ -275,10 +277,12 @@ object typer {
       sys.error(sinfo(msg))
 
     def sinfo(msg: String = ""): String =
-      s"""synth ${if (ref) then s"[refining] - $msg" else msg}
+      s"""SYNTH ${if (ref) then s"[refining] - $msg" else msg}
          |exp: ${ppexp(exp)}
          |ctx: ${ppctx(ctx)}
        """.stripMargin
+
+    println(sinfo("!!! "))
 
     exp match {
       case Lam(_,_)                                 => serror()
