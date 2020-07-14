@@ -15,10 +15,19 @@ case class Lam(s: Sym, e: Exp) extends Exp
 case class App(f: Exp, x: Exp) extends Exp
 case class Ann(e: Exp, t: Typ) extends Exp
 case class Var(n: Name)        extends Sym
-case class Hol(i: Opt[Int])    extends Sym {
+case class Hol(n: Name = "")   extends Sym {
 
-  def n: Name =
-    s"?${i.getOrElse("")}"
+  def isEmpty: Boolean =
+    n == ""
+
+  def nr: Int =
+    if (!isEmpty) n.toInt else sys.error("nr on empty hole")
+}
+
+object Hol {
+
+  def apply(i: Int): Hol =
+    Hol(i.toString)
 }
 
 // types
@@ -56,8 +65,9 @@ case class Goal( current  : Exp
 
 object Goal {
 
-    import Opt._
     import parser._
+    import Holes._
+    import Opt._
 
     def apply(task: String): Goal = {
       
@@ -65,10 +75,10 @@ object Goal {
         tparse(task)
 
       val proof: Exp =
-        Ann(Hol(The(0)), hypothesis)
+        Ann(Hol(0), hypothesis)
       
       Goal( current  = proof
-          , holes    = Holes.init(0, hypothesis)
+          , holes    = init(0, hypothesis)
           , nextNr   = 1
           , isSolved = false
           )
@@ -93,9 +103,8 @@ object parser {
     token(name).map(n => Var(n))
 
   def hole: P[Hol] =
-    for { _ <- reserved("?") ; i <- number.zeroOrMore } yield Hol(i.opt)
+    for { _ <- reserved("?") ; i <- digit.zeroOrMore } yield Hol(i.mkString)
     
-  
   def application: P[Exp] =
     for { 
       _  <- reserved("(") 
@@ -182,7 +191,7 @@ object printer {
     e match {
       case Lam(s,e) => s"(λ ${ppexp(s)} => ${ppexp(e)})"
       case App(f,a) => s"(${ppexp(f)} ${ppexp(a)})"
-      case Hol(oi)  => s"?${oi.getOrElse("")}"
+      case Hol(n)   => s"?$n"
       case Var(n)   => n
       case Ann(e,t) => s"(${ppexp(e)} : ${pptyp(t)})"
     }
@@ -195,6 +204,20 @@ object printer {
 
   def ppctx(c: Ctx): String = 
     c.map((s,t) => s"\n${s.n} : ${pptyp(t)}").mkString
+
+  def pptask(t: Exp): String =
+    s"${printer.ppexp(t)}\n"
+  
+  def ppholes(holes: Holes): String =
+    holes
+      .map({case (n,(t,c)) => s"Goal $n has type ${pptyp(t)} in context ${ppctx(c)}"})
+      .mkString
+  
+  def ppgoal(g: Goal): String =
+    s"""Goal with ${g.holes.keys.size} hole${if (g.holes.keys.size > 1) "s" else ""} is now
+        |${ppexp(g.current)}
+        |${ppholes(g.holes)}
+      """.stripMargin
 }
 
 object typer {
@@ -214,37 +237,28 @@ object typer {
          |Ctx: ${ppctx(ctx)}
       """.stripMargin
 
-    // println(cinfo())
-
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
       case ( Lam(x,t) , _        ) => cerror()
-      case ( Hol(oa)  , _        ) =>
-        if   (ref)
-        then
-          if (oa.nonEmpty) 
-          then { println(s"\n\nTYPE: $typ\n\n") ; (true, ctx + (Hol(oa) -> typ)) }
-          else cerror("No hole number.")
-        else (true, ctx)
-      case _  => 
-        if (typ == synth(ctx, exp, ref))
-        then (true, ctx)
-        else cerror()
+      case ( Hol(n)   , _        ) => if (ref)
+                                        then (true, ctx + (Hol(n) -> typ))
+                                        else (true, ctx)
+      case _                       => if (typ == synth(ctx, exp, ref))
+                                        then (true, ctx)
+                                        else cerror()
     }
   }
 
   def synth(ctx: Ctx, exp: Exp, ref: Boolean = false): Typ = {
 
-    def serror(msg: String = "Unable to synth.") = 
+    def serror(msg: String = "unable to synth") = 
       sys.error(sinfo(msg))
 
     def sinfo(msg: String = ""): String =
-      s"""SYNTH ${if (ref) then "[refining] " + msg else msg}
-         |Exp: ${ppexp(exp)}
-         |Ctx: ${ppctx(ctx)}
+      s"""synth ${if (ref) then s"[refining] - $msg" else msg}
+         |exp: ${ppexp(exp)}
+         |ctx: ${ppctx(ctx)}
        """.stripMargin
-
-    // println(sinfo())
 
     exp match {
       case Lam(_,_)                                 => serror()
@@ -314,8 +328,8 @@ object assistent {
         val (ne,nc) = number(e, ctr) 
         (Ann(ne, t), nc)
       }
-      case Hol(en) =>
-        (Hol(Opt(en.getOrElse(ctr))), ctr + 1)
+      case Hol("") => (Hol(ctr), ctr + 1)
+      case Hol(n)  => (Hol(n),  ctr + 1)
     }
 
   def replace(nr: Int, rep: Exp, exp: Exp): Exp =
@@ -324,50 +338,32 @@ object assistent {
       case App(f,a)    => App(replace(nr, rep, f), replace(nr, rep, a))
       case Var(n)      => Var(n)
       case Ann(e,t)    => Ann(replace(nr, rep, e), t)
-      case Hol(The(n)) => if (n == nr) then rep else Hol(The(n))
-      case Hol(non)    => sys.error(s"Unnumbered hole in expression: $exp")
+      case Hol("")     => sys.error(s"unnumbered hole in expression: $exp")
+      case Hol(n)      => if (n.toInt == nr) then rep else Hol(n)
     }
-
-  def pptask(t: Exp): String =
-    s"${printer.ppexp(t)}\n"
-  
-  def ppholes(holes: Holes): String =
-    holes
-      .map({case (n,(t,c)) => s"Goal $n has type ${pptyp(t)} in context ${ppctx(c)}"})
-      .mkString
-  
-  def ppgoal(g: Goal): String =
-    s"""Task with ${g.holes.keys.size} goal${if (g.holes.keys.size > 1) "s" else ""} is now
-        |${ppexp(g.current)}
-        |${ppholes(g.holes)}
-      """.stripMargin
 
   def refine(hole: Int, exp: String): State[Goal,Goal] = {
 
     val refinement: Exp =
-      eparse(exp) 
-
+      eparse(exp)
+      
     State(goal => {
-      println("PRE REFINE:\n" + ppgoal(goal))
 
-      val (t,c)    = goal.holes.getOrElse(hole, sys.error(s"No hole: $hole"))
+      val (t,c)    = goal.holes.getOrElse(hole, sys.error(s"no hole data $hole"))
       val _        = check(c, refinement, t)
       val (ne, nc) = number(refinement, goal.nextNr)
       val (_, ctx) = check(c, ne, t, ref = true)
-      if (nc != hole+1) {
-        val nhole    = (hole+1) -> (ctx(Hol(The(hole+1))) ->  ctx)
-        println(s"NEW HOLE: $nhole")
-        val nexp   = replace(hole, ne, goal.current)
-        val nholes = goal.holes - hole + nhole
-        println(s"HOLES: $nholes")
-        val ngoal  = goal.copy(nexp, nholes, nc)
-        println("POST REFINE:\n" + ppgoal(ngoal))
-        (ngoal,ngoal)
+
+      val ngoal = if (nc != hole+1) {
+        val nhole    = (hole+1) -> (ctx(Hol(hole+1)) ->  ctx)
+        val nexp     = replace(hole, ne, goal.current)
+        val nholes   = goal.holes - hole + nhole
+        goal.copy(nexp, nholes, nc)
       } else {
-        val ngoal = goal.copy(ne, Holes.empty, -1, true)
-        (ngoal,ngoal)
+        goal.copy(ne, Holes.empty, -1, true)
       }
-  
+
+      (ngoal,ngoal)
     })
   }
 }

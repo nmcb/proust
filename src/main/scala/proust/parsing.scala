@@ -3,6 +3,7 @@ package proust
 object parsing {
 
 import sequencing._
+import disjoining.option._
 
 case class P[+A](parse: String => Seq[(A,String)]) {
 
