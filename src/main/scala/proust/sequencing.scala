@@ -64,6 +64,18 @@ enum Seq[+A] {
   def reverse: Seq[A] =
     foldr(Seq.empty)(a => l => l ++ Seq(a))
 
+  def length: Int = {
+      def loop(l: Seq[A], acc: Int = 0): Int =
+        l match {
+          case End()    => acc
+          case Cel(_,r) => loop(r, acc + 1)
+        }
+      loop(this)
+    }
+
+  def size: Int =
+    length
+
   def withFilter(p: A => Boolean): scala.collection.WithFilter[A, scala.Seq] =
     ???
 
@@ -90,9 +102,9 @@ object Seq {
   import scala.List
 
   def apply[A](as: A*): Seq[A] =
-    apply(as.toList)
+    apply(as.toIterable)
 
-  def apply[A](l: List[A]): Seq[A] =
+  def apply[A](l: Iterable[A]): Seq[A] =
     l.foldRight(Seq.empty)((a,s) => Cel(a,s))
 
   def unapplySeq[A](sa: Seq[A]): Option[List[A]] =

@@ -1,5 +1,7 @@
 package proust
 
+import sequencing._
+
 // expressions
 
 type Name = String
@@ -21,7 +23,7 @@ case class Hol(n: Name = "")   extends Sym {
     if (!isEmpty) n.toInt else sys.error("nr on empty hole")
 }
 
-case object Hol {
+object Hol {
 
   def apply(i: Int): Hol =
     Hol(i.toString)
@@ -46,15 +48,33 @@ object Ctx {
     Map.empty
 }
 
-type Holes = Map[Int,(Typ,Ctx)]
+type Hole = (Int,Typ,Ctx)
+
+case class Holes(holes : Map[Int,(Typ,Ctx)] = Map[Int,(Typ,Ctx)]()) {
+
+  def get(hole: Int): (Typ,Ctx) =
+    holes.getOrElse(hole, sys.error(s"hole $hole doesn't exist"))
+  
+  def numbers: Seq[Int] =
+    Seq(holes.keys.toList)
+
+  def -(hole: Int): Holes =
+    Holes(holes - hole)
+
+  def +(hole: Hole): Holes =
+    Holes(holes + (hole._1 -> (hole._2 -> hole._3)))
+
+  def map[B](f: Hole => B): Seq[B] =
+    Seq(holes.map({ case (n,(t,c)) => f((n,t,c))}))
+}
 
 object Holes {
 
   def empty: Holes =
-    Map.empty
+    Holes()
 
   def init(nr: Int, typ: Typ): Holes =
-    Map(nr -> (typ -> Map.empty))
+    Holes(Map(nr -> (typ -> Map.empty)))
 }
 
 case class Goal( current  : Exp
@@ -89,7 +109,6 @@ object parser {
   import sequencing._
   import Seq._
   import parsing._
-  import calculator._
   import P._
 
   def name: P[Name] =
@@ -209,11 +228,11 @@ object printer {
   
   def ppholes(holes: Holes): String =
     holes
-      .map({case (n,(t,c)) => s"[$n] : ${pptyp(t)} in context ${ppctx(c)}"})
+      .map((nr,t,c) => s"[$nr] : ${pptyp(t)} in context ${ppctx(c)}")
       .mkString
   
   def ppinfo(g: Goal): String =
-    s"""Goals [${g.holes.keys.size}] ${ppexp(g.current)}
+    s"""Goals [${g.holes.numbers.size}] ${ppexp(g.current)}
         |${ppholes(g.holes)}
         |${if (g.isSolved) "\nSolved." else ""}
       """.stripMargin
@@ -352,16 +371,16 @@ object assistent {
 
     val refinement: Exp =
       eparse(exp)
-      
+
     State(goal => {
 
-      val (t,c)    = goal.holes.getOrElse(hole, sys.error(s"no hole data $hole"))
+      val (t,c)    = goal.holes.get(hole)
       val _        = check(c, refinement, t)
       val (ne, nc) = number(refinement, goal.nextNr)
       val (_, ctx) = check(c, ne, t, ref = true)
 
       val ngoal = if (nc != hole+1) {
-        val nhole    = (hole+1) -> (ctx(Hol(hole+1)) ->  ctx)
+        val nhole    = ( hole+1 , ctx(Hol(hole+1)) ,  ctx )
         val nexp     = replace(hole, ne, goal.current)
         val nholes   = goal.holes - hole + nhole
         goal.copy(nexp, nholes, nc)
