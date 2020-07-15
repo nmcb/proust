@@ -13,6 +13,7 @@ sealed trait Sym extends Exp {
 case class Lam(s: Sym, e: Exp) extends Exp
 case class App(f: Exp, x: Exp) extends Exp
 case class Ann(e: Exp, t: Typ) extends Exp
+case class Prd(l: Exp, r: Exp) extends Exp
 case class Var(n: Name)        extends Sym
 case class Hol(n: Name = "")   extends Sym {
 
@@ -37,6 +38,7 @@ object Hol {
 trait Typ 
 case class Arr(a: Typ, b: Typ) extends Typ
 case class Den(n: Name)        extends Typ
+case class T_*(l: Typ, r: Typ) extends Typ
 
 // context
 
@@ -81,6 +83,7 @@ case class Goal( current  : Exp
                , holes    : Holes
                , nextNr   : Int
                , isSolved : Boolean
+               , trace    : Boolean
                )
 
 object Goal {
@@ -88,7 +91,7 @@ object Goal {
     import parser._
     import Holes._
 
-    def apply(task: String): Goal = {
+    def apply(task: String, trace: Boolean = false): Goal = {
       
       val hypothesis: Typ =
         tparse(task)
@@ -100,6 +103,7 @@ object Goal {
           , holes    = init(0, hypothesis)
           , nextNr   = 1
           , isSolved = false
+          , trace    = trace
           )
     }
 }
@@ -126,10 +130,10 @@ object parser {
   def application: P[Exp] =
     for { 
       _  <- reserved("(") 
-      e1 <- expression
-      e2 <- expression
+      f <- expression
+      x <- expression
       _  <- reserved(")")
-    } yield App(e1, e2)
+    } yield App(f, x)
 
   def lambda: P[Exp] =
     for {
@@ -148,6 +152,15 @@ object parser {
       t <- typ
       _ <- reserved(")")
     } yield Ann(e, t)
+  
+  def product: P[Exp] =
+    for {
+      _  <- reserved("(")
+      l <- expression
+      _  <- reserved(",")
+      r <- expression
+      _  <- reserved(")")
+    } yield Prd(l, r)
 
   def apprep: P[Exp] = {
     for {
@@ -160,7 +173,7 @@ object parser {
   }
 
   def expression: P[Exp] =
-    lambda |!| application |!| hole |!| variable |!| annotation |!| apprep
+    lambda |!| application |!| hole |!| variable |!| annotation |!| product |!| apprep
 
   def denotation: P[Den] =
     token(typeName).map(n => Den(n))
@@ -168,11 +181,11 @@ object parser {
   def arrow: P[Typ] =
     for {
       _ <- reserved("(")
-      f <- typ
+      a <- typ
       _ <- reserved("->")
-      t <- typ
+      b <- typ
       _ <- reserved(")")
-    } yield Arr(f, t)
+    } yield Arr(a, b)
 
   def arrrep: P[Typ] = {
 
@@ -193,8 +206,17 @@ object parser {
     } yield rassoc(t1 :: t2 :: r)
   }
 
+  def and: P[Typ] =
+    for {
+      _  <- reserved("(")
+      l <- typ
+      _ <- reserved("&&")
+      r <- typ
+      _  <- reserved(")")
+    } yield T_*(l, r)
+
   def typ: P[Typ] =
-    arrow |!| arrrep |!| denotation
+    arrow |!| arrrep |!| and |!| denotation
 
   def eparse(s: String): Exp =
     run(expression)(s)
@@ -207,17 +229,19 @@ object printer {
 
   def ppexp(e: Exp): String =
     e match {
-      case Lam(s,e) => s"(λ ${ppexp(s)} => ${ppexp(e)})"
-      case App(f,a) => s"(${ppexp(f)} ${ppexp(a)})"
-      case Hol(n)   => s"?$n"
-      case Var(n)   => n
-      case Ann(e,t) => s"(${ppexp(e)} : ${pptyp(t)})"
+      case Lam(s,e)   => s"(λ ${ppexp(s)} => ${ppexp(e)})"
+      case App(f,a)   => s"(${ppexp(f)} ${ppexp(a)})"
+      case Hol(n)     => s"?$n"
+      case Var(n)     => n
+      case Ann(e,t)   => s"(${ppexp(e)} : ${pptyp(t)})"
+      case Prd(e1,e2) => s"(${ppexp(e1)} * ${ppexp(e2)})"
     }
 
   def pptyp(t: Typ): String =
     t match {
-      case Arr(a,b) => s"(${pptyp(a)} -> ${pptyp(b)})"
       case Den(n)   => n
+      case Arr(a,b) => s"(${pptyp(a)} -> ${pptyp(b)})"
+      case T_*(a,b) => s"(${pptyp(a)} && ${pptyp(b)})"
     }
 
   def ppctx(c: Ctx): String = 
@@ -231,14 +255,14 @@ object printer {
       .map((nr,t,c) => s"[$nr] : ${pptyp(t)} in context ${ppctx(c)}")
       .mkString
   
-  def ppinfo(g: Goal): String =
+  def ppgoal(g: Goal): String =
     s"""Goals [${g.holes.numbers.size}] ${ppexp(g.current)}
         |${ppholes(g.holes)}
         |${if (g.isSolved) "\nSolved." else ""}
       """.stripMargin
 
   def pprint: State[Goal,Unit] =
-    State(g => (println(ppinfo(g)),g))
+    State(g => (println(ppgoal(g)),g))
 }
 
 object typer {
@@ -256,6 +280,8 @@ object typer {
          |Typ: ${pptyp(typ)}
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
+
+    println(cinfo())
 
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
@@ -280,9 +306,11 @@ object typer {
          |ctx: ${ppctx(ctx)}
        """.stripMargin
 
+    println(sinfo())
+
     exp match {
       case Lam(_,_)                                 => serror()
-      case Hol(n)                                   => serror()
+      case Hol(_)                                   => serror()
       case Ann(e,t) if check(ctx, e, t, ref)._1     => t
       case App(f,x)                                 =>
         synth(ctx, f) match {
@@ -326,39 +354,44 @@ object State {
 
 object assistent {
 
+  import printer._
   import parser._
   import typer._
   import State._
 
   def number(exp: Exp, ctr: Int): (Exp, Int) =
     exp match {
-      case Lam(s,e) => {
+      case Lam(s,e) =>
         val (ne,nc) = number(e, ctr)
         (Lam(s,ne),nc)
-      }
-      case App(f,a) => {
+      case App(f,a) =>
         val (e1,c1) = number(f, ctr)
         val (e2,c2) = number(a, c1)
         (App(e1, e2), c2)
-      }
       case Var(n) =>
         (Var(n), ctr)
-      case Ann(e,t) => {
+      case Ann(e,t) =>
         val (ne,nc) = number(e, ctr) 
         (Ann(ne, t), nc)
-      }
-      case Hol("") => (Hol(ctr), ctr + 1)
-      case Hol(n)  => (Hol(n),  ctr + 1)
+      case Hol("") =>
+        (Hol(ctr), ctr + 1)
+      case Hol(n)  =>
+        (Hol(n),  ctr)
+      case Prd(e1,e2) =>
+        val (ne1,c1) = number(e1, ctr)
+        val (ne2,c2) = number(e2, c1)
+        (Prd(ne1,ne2), c2)
     }
 
   def replace(nr: Int, rep: Exp, exp: Exp): Exp =
     exp match {
-      case Lam(s,e)  => Lam(s, replace(nr, rep, e))
-      case App(f,a)  => App(replace(nr, rep, f), replace(nr, rep, a))
-      case Var(n)    => Var(n)
-      case Ann(e,t)  => Ann(replace(nr, rep, e), t)
-      case Hol("")   => sys.error(s"unnumbered hole in expression: $exp")
-      case Hol(n)    => if (n.toInt == nr) then rep else Hol(n)
+      case Lam(s,e)   => Lam(s, replace(nr, rep, e))
+      case App(f,a)   => App(replace(nr, rep, f), replace(nr, rep, a))
+      case Var(n)     => Var(n)
+      case Ann(e,t)   => Ann(replace(nr, rep, e), t)
+      case Hol("")    => sys.error(s"unnumbered hole in expression: $exp")
+      case Hol(n)     => if (n.toInt == nr) then rep else Hol(n)
+      case Prd(e1,e2) => Prd(replace(nr, rep, e1), replace(nr, rep, e2))
     }
 
   def task(task: String): State[Goal,Exp] =
@@ -373,6 +406,8 @@ object assistent {
       eparse(exp)
 
     State(goal => {
+
+      if (goal.trace) println(ppgoal(goal))
 
       val (t,c)    = goal.holes.get(hole)
       val _        = check(c, refinement, t)
@@ -391,20 +426,4 @@ object assistent {
       (ngoal,ngoal)
     })
   }
-}
-
-object Main extends scala.App {
-
-  import assistent._
-
-  val session: State[Goal,Unit] =
-    for {
-      g1 <- refine( 0 , "(λ x => ?)" )
-      g2 <- refine( 1 , "(λ y => ?)" )
-      g3 <- refine( 2 , "x"          )
-
-      _  <- State.unit(assert(g3.isSolved))
-    } yield ()
-
-   session.run(Goal(  "(A -> (B -> A))"))
 }

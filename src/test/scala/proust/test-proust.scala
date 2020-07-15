@@ -20,8 +20,9 @@ class ProustTests {
       .map(_ => true)
       .getOrElse(false)
 
-  @Test def testProof(): Unit =
+  @Test def testProof(): Unit = {
     proof("((λ x => (λ y => x)) : (A -> (B -> A)))")
+  }
 
   @Test def testNumber(): Unit = {
     val exp = Lam(Var("a"),App(Hol(0),Hol(1)))
@@ -96,4 +97,23 @@ class ProustTests {
 
     proof.run(hypothesis)
   }
+
+  // @Test def testProduct(): Unit = {
+
+  //   val hypothesis: Goal = Goal("((A -> B) -> (A && B))", trace = true)
+
+  //   val proof: State[Goal,Unit] =
+  //     (for {
+  //       g1 <- refine( 0 , "(λ a => ?)" )
+  //       g2 <- refine( 1 , "(λ b => ?)" )
+  //       g3 <- refine( 2 , "(a , b)" )
+
+  //       _  <- State.unit(assert(g3.isSolved))
+  //       } yield ())
+
+  //   proof.run(hypothesis)
+  // }
+
+  // @Test def testTrivialProductProof(): Unit =
+  //   proof("(λ a => (λ b => (a , b))) : ((A -> B) -> (A && B))")
 }

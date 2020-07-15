@@ -184,7 +184,10 @@ class ProustParserTests {
 
   @Test def testProustParserAnnotation(): Unit = {
     assertEquals( Ann(Var("a"),Den("A")) , run(annotation)("(a : A)"))
-    assertEquals( Ann(Var("a"),Den("A")) , run(annotation)("(a : A)"))
+  }  
+
+  @Test def testProustParserProduct(): Unit = {
+    assertEquals( Prd(Var("a"),Var("b")) , run(product)("(a , b)"))
   }  
 
   @Test def testProustParserExpr(): Unit = {
@@ -192,6 +195,7 @@ class ProustParserTests {
     assertEquals( App(Var("a"),Var("b")) , run(expression)("(a  b)"))
     assertEquals( Var("a")               , run(expression)("a"))
     assertEquals( Ann(Var("a"),Den("A")) , run(expression)("(a : A)"))
+    assertEquals( Prd(Var("a"),Var("b")) , run(expression)("(a , b)"))
     // human readable form employing the observation that application is left-associative
     assertEquals( App(App(Var("a"),Var("b")),Var("c")) , run(expression)("(a b c)"))
   }  
@@ -207,9 +211,14 @@ class ProustParserTests {
     assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> (B -> C))"))
   }  
 
+  @Test def testProustParserT_*(): Unit = { 
+    assertEquals( T_*(Den("A"),Den("B")) , run(and)("(A && B)"))
+  }
+
   @Test def testProustParserTyp(): Unit = { 
     assertEquals( Den("A")               , run(typ)("A"))
     assertEquals( Arr(Den("A"),Den("B")) , run(typ)("(A -> B)"))
+    assertEquals( T_*(Den("A"),Den("B")) , run(typ)("(A && B)"))
     // human readable form employing the observation that application is right-associative
     assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(typ)("(A -> B -> C)"))
   }  
