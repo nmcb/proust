@@ -21,6 +21,7 @@ class ProustTests {
       .getOrElse(false)
 
   @Test def testProof(): Unit = {
+    proof("((λ x => (λ f => (f x))) : (A -> ((A -> B) -> B)))")
     proof("((λ x => (λ y => x)) : (A -> (B -> A)))")
   }
 
