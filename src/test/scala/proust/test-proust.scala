@@ -99,22 +99,22 @@ class ProustTests {
     proof.run(hypothesis)
   }
 
-  // @Test def testProduct(): Unit = {
+  @Test def testProduct(): Unit = {
 
-  //   val hypothesis: Goal = Goal("((A -> B) -> (A && B))", trace = true)
+    val hypothesis: Goal = Goal("(A -> B -> A && B)")
 
-  //   val proof: State[Goal,Unit] =
-  //     (for {
-  //       g1 <- refine( 0 , "(λ a => ?)" )
-  //       g2 <- refine( 1 , "(λ b => ?)" )
-  //       g3 <- refine( 2 , "(a , b)" )
+    val proof: State[Goal,Unit] =
+      (for {
+        g1 <- refine( 0 , "(λ a => ?)" )
+        g2 <- refine( 1 , "(λ b => ?)" )
+        g3 <- refine( 2 , "(* a b)" )
 
-  //       _  <- State.unit(assert(g3.isSolved))
-  //       } yield ())
+        _  <- State.unit(assert(g3.isSolved))
+        } yield ())
 
-  //   proof.run(hypothesis)
-  // }
+    proof.run(hypothesis)
+  }
 
-  // @Test def testTrivialProductProof(): Unit =
-  //   proof("(λ a => (λ b => (a , b))) : ((A -> B) -> (A && B))")
+  @Test def testTrivialProductProof(): Unit =
+    proof("(λ a => (λ b => (* a b))) : (A -> B -> A && B)")
 }

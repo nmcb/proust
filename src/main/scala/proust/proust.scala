@@ -155,9 +155,8 @@ object parser {
   
   def product: P[Exp] =
     for {
-      _  <- reserved("(")
+      _  <- reserved("(*")
       l <- expression
-      _  <- reserved(",")
       r <- expression
       _  <- reserved(")")
     } yield Prd(l, r)
@@ -177,6 +176,13 @@ object parser {
 
   def denotation: P[Den] =
     token(typeName).map(n => Den(n))
+
+  def prdtyp: P[Typ] =
+    for {
+      a <- denotation
+      _ <- reserved("&&")
+      b <- typ
+    } yield T_*(a, b)
   
   def arrow: P[Typ] =
     for {
@@ -206,17 +212,8 @@ object parser {
     } yield rassoc(t1 :: t2 :: r)
   }
 
-  def and: P[Typ] =
-    for {
-      _  <- reserved("(")
-      l <- typ
-      _ <- reserved("&&")
-      r <- typ
-      _  <- reserved(")")
-    } yield T_*(l, r)
-
   def typ: P[Typ] =
-    arrow |!| arrrep |!| and |!| denotation
+    arrow |!| arrrep |!| prdtyp |!| denotation
 
   def eparse(s: String): Exp =
     run(expression)(s)
@@ -234,22 +231,19 @@ object printer {
       case Hol(n)     => s"?$n"
       case Var(n)     => n
       case Ann(e,t)   => s"(${ppexp(e)} : ${pptyp(t)})"
-      case Prd(e1,e2) => s"(${ppexp(e1)} * ${ppexp(e2)})"
+      case Prd(e1,e2) => s"(* ${ppexp(e1)} ${ppexp(e2)})"
     }
 
   def pptyp(t: Typ): String =
     t match {
       case Den(n)   => n
+      case T_*(a,b) => s"${pptyp(a)} && ${pptyp(b)}"
       case Arr(a,b) => s"(${pptyp(a)} -> ${pptyp(b)})"
-      case T_*(a,b) => s"(${pptyp(a)} && ${pptyp(b)})"
     }
 
   def ppctx(c: Ctx): String = 
     c.map((s,t) => s"\n${s.n} : ${pptyp(t)}").mkString
 
-  def pptask(t: Exp): String =
-    s"${printer.ppexp(t)}\n"
-  
   def ppholes(holes: Holes): String =
     holes
       .map((nr,t,c) => s"[$nr] : ${pptyp(t)} in context ${ppctx(c)}")
@@ -281,7 +275,7 @@ object typer {
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
-    println(cinfo())
+    // println(cinfo())
 
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
@@ -300,18 +294,19 @@ object typer {
     def serror(msg: String = "unable to synth") = 
       sys.error(sinfo(msg))
 
-    def sinfo(msg: String = ""): String =
+    def sinfo(msg: String = "trace"): String =
       s"""SYNTH ${if (ref) then s"[refining] - $msg" else msg}
          |exp: ${ppexp(exp)}
-         |ctx: ${ppctx(ctx)}
+         |ctx: ${ppctx(ctx)}s
        """.stripMargin
 
-    println(sinfo())
+    // println(sinfo())
 
     exp match {
       case Lam(_,_)                                 => serror()
       case Hol(_)                                   => serror()
       case Ann(e,t) if check(ctx, e, t, ref)._1     => t
+      case Prd(a,b)                                 => T_*(synth(ctx, a, ref), synth(ctx, b, ref))
       case App(f,x)                                 =>
         synth(ctx, f) match {
           case Arr(a,b) if check(ctx, x, a, ref)._1 => b

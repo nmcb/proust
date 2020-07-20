@@ -30,7 +30,6 @@ case class P[+A](parse: String => Seq[(A,String)]) {
 
   def ap[B](ff: P[A => B]): P[B] =
     P(s => ff.parse(s).flatMap((f,s1) => parse(s1).map((a,s2) => (f(a),s2))))
-    // P(s => for { (f, s1) <- ff.parse(s) ; (a, s2) <- parse(s1) } yield (f(a), s2))
 
   def |!|[A1 >: A](that: => P[A1]): P[A1] =
     P(s => parse(s) match {
