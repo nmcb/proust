@@ -25,10 +25,10 @@ class ProustTests {
     proof("((λ x => (λ y => x)) : (A -> (B -> A)))")
   }
 
-  @Test def testNumber(): Unit = {
+  @Test def testFpnumber(): Unit = {
     val exp = Lam(Var("a"),App(Hol(0),Hol(1)))
     val fix = Lam(Var("a"),App(Hol( ),Hol( )))
-    assertEquals( (exp, 2) , number(fix, 0))
+    assertEquals( (exp, 2) , fpnumber(fix, 0))
   }
 
   @Test def testRefine(): Unit = {

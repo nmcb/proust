@@ -5,6 +5,7 @@ import sequencing._
 // expressions
 
 type Name = String
+type Err  = Exception
 
 sealed trait Exp
 sealed trait Sym extends Exp {
@@ -31,7 +32,7 @@ object Hol {
   def apply(i: Int): Hol =
     Hol(i.toString)
 
-  def empty: Hol =
+  val empty: Hol =
     Hol("")
 }
 
@@ -90,6 +91,8 @@ case class Goal( current  : Exp
 
 object Goal {
 
+
+    import disjoining._
     import parser._
     import Holes._
 
@@ -298,7 +301,7 @@ object typer {
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
-    // println(cinfo())
+    println(cinfo())
 
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
@@ -323,7 +326,7 @@ object typer {
          |ctx: ${ppctx(ctx)}
        """.stripMargin
 
-    // println(sinfo())
+    println(sinfo())
 
     exp match {
       case Lam(_,_)                                 => serror()
@@ -353,15 +356,6 @@ object typer {
 
 case class State[S,A](run: S => (A,S)) {
 
-  def get: State[S,S] =
-    State(s => (s,s))
-
-  def set(s: S): State[S,Unit] =
-    State(_ => ((),s))
-
-  def modify(f: S => S): State[S,Unit] =
-    for { s <- get ; _ <- set(f(s)) } yield ()
-
   def map[B](f: A => B): State[S,B] =
     flatMap(a => State(s => (f(a),s)))
 
@@ -378,6 +372,19 @@ object State {
   def unit[S,A](a: A): State[S,A] =
     State[S,A](s => (a,s))
 
+  def get[S]: State[S,S] =
+    inspect(identity)
+
+  def set[S](s: S): State[S,Unit] =
+    State(_ => ((),s))
+
+  def modify[S](f: S => S): State[S,Unit] =
+    State(s => ((), f(s)))
+
+  def inspect[S,T](f: S => T): State[S,T] =
+    State(s => (f(s),s))
+
+
 }
 
 object assistent {
@@ -387,35 +394,22 @@ object assistent {
   import typer._
   import State._
 
-  def number(exp: Exp, ctr: Int): (Exp, Int) =
+  def number(exp: Exp): State[Int,Exp] = {
     exp match {
-      case Lam(s,e) =>
-        val (ne,nc) = number(e, ctr)
-        (Lam(s,ne),nc)
-      case App(f,a) =>
-        val (e1,c1) = number(f, ctr)
-        val (e2,c2) = number(a, c1)
-        (App(e1, e2), c2)
-      case Var(n) =>
-        (Var(n), ctr)
-      case Ann(e,t) =>
-        val (ne,nc) = number(e, ctr) 
-        (Ann(ne, t), nc)
-      case Hol("") =>
-        (Hol(ctr), ctr + 1)
-      case Hol(n)  =>
-        (Hol(n),  ctr)
-      case Prd(e1,e2) =>
-        val (ne1,c1) = number(e1, ctr)
-        val (ne2,c2) = number(e2, c1)
-        (Prd(ne1,ne2), c2)
-      case Fst(e) =>
-        val (ne,c) = number(e, ctr)
-        (Fst(ne), c)
-      case Snd(e) =>
-        val (ne,c) = number(e, ctr)
-        (Snd(ne), c)
+      case Lam(s, e) => for { ne <- number(e) } yield Lam(s, ne)
+      case App(f, a) => for { e1 <- number(f) ; e2 <- number(a) } yield App(e1, e2)
+      case v: Var    => State.inspect(_ => v)
+      case Ann(e, t) => for { ne <- number(e) } yield Ann(ne, t)
+      case Hol.empty => for { nr <- State.get[Int] ; _ <- State.set(nr+1) } yield { println(s"!!! $nr") ; Hol(nr) }
+      case h: Hol    => State.inspect(_ => h)
+      case Prd(l, r) => for { nl <- number(l) ; nr <- number(r) } yield Prd(nl, nr)
+      case Fst(e)    => for { ne <- number(e) } yield Fst(ne)
+      case Snd(e)    => for { ne <- number(e) } yield Snd(ne)
     }
+  }
+
+  def fpnumber(exp: Exp, ctr: Int): (Exp, Int) =
+    (for { ne <- number(exp) } yield ne).run(ctr)
 
   def replace(nr: Int, rep: Exp, exp: Exp): Exp =
     exp match {
@@ -436,18 +430,22 @@ object assistent {
       (goal.current , goal)
     })
 
+  def solved: State[Goal,Boolean] =
+    State(g => (g.isSolved, g))
+
   def refine(hole: Int, exp: String): State[Goal,Goal] = {
 
     val refinement: Exp =
       eparse(exp)
 
+      
     State(goal => {
 
       if (goal.trace) println(ppgoal(goal))
 
       val (t,c)    = goal.holes.get(hole)
       val _        = check(c, refinement, t)
-      val (ne, nc) = number(refinement, goal.nextNr)
+      val (ne, nc) = fpnumber(refinement, goal.nextNr)
       val (_, ctx) = check(c, ne, t, ref = true)
 
       val ngoal = if (nc != hole+1) {
