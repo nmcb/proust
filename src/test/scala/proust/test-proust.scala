@@ -41,7 +41,7 @@ class ProustTests {
         g2 <- refine( 1 , "(λ y => ?)" )
         g3 <- refine( 2 , "x"          )
 
-        _  <- State.unit(assert(g3.isSolved))
+        _  <- State.pure(assert(g3.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -58,7 +58,7 @@ class ProustTests {
         g3 <- refine( 2 , "(λ z => ?)" )
         g4 <- refine( 3 , "((x z) (y z))" )
 
-        _  <- State.unit(assert(g4.isSolved))
+        _  <- State.pure(assert(g4.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -76,7 +76,7 @@ class ProustTests {
         g4 <- refine( 3 , "(λ w => ?)" )
         g5 <- refine( 4 , "(y z)" )
 
-        _  <- State.unit(assert(g5.isSolved))
+        _  <- State.pure(assert(g5.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -93,7 +93,7 @@ class ProustTests {
         g3 <- refine( 2 , "(λ z => ?)" )  
         g4 <- refine( 3 , "(x (y z))" )
 
-        _  <- State.unit(assert(g4.isSolved))
+        _  <- State.pure(assert(g4.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -109,7 +109,7 @@ class ProustTests {
         g2 <- refine( 1 , "(λ b => ?)" )
         g3 <- refine( 2 , "(* a b)" )
 
-        _  <- State.unit(assert(g3.isSolved))
+        _  <- State.pure(assert(g3.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -139,7 +139,7 @@ class ProustTests {
         g3 <- refine( 2 , "(λ z => ?)"  )  
         g4 <- refine( 3 , "(x (* y z))" )
 
-        _  <- State.unit(assert(g4.isSolved))
+        _  <- State.pure(assert(g4.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -155,7 +155,7 @@ class ProustTests {
         g2 <- refine( 1 , "(λ y => ?)" )
         g3 <- refine( 2 , "((x (fst y)) (snd y))" )  
 
-        _  <- State.unit(assert(g3.isSolved))
+        _  <- State.pure(assert(g3.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -171,7 +171,7 @@ class ProustTests {
         g2 <- refine( 1 , "(λ y => ?)" )
         g3 <- refine( 2 , "(* (x (fst y)) (snd y))" )  
 
-        _  <- State.unit(assert(g3.isSolved))
+        _  <- State.pure(assert(g3.isSolved))
         } yield ())
 
     proof.run(hypothesis)
@@ -187,7 +187,7 @@ class ProustTests {
         g2 <- refine( 1 , "(λ y => ?)" )
         g3 <- refine( 2 , "(* ((fst x) (fst y)) ((snd x) (snd y)))" )  
 
-        _  <- State.unit(assert(g3.isSolved))
+        _  <- State.pure(assert(g3.isSolved))
         } yield ())
 
     proof.run(hypothesis)

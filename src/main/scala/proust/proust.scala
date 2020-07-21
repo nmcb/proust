@@ -359,6 +359,9 @@ case class State[S,A](run: S => (A,S)) {
   def map[B](f: A => B): State[S,B] =
     flatMap(a => State(s => (f(a),s)))
 
+  def map2[B](fa: S => B, fs: S => S): State[S,B] =
+    State(s => (fa(s), fs(s)))
+
   def flatMap[B](f: A => State[S,B]): State[S,B] =
     State(s => { val (a,ss) = run(s) ; f(a).run(ss) })
 
@@ -369,9 +372,15 @@ case class State[S,A](run: S => (A,S)) {
 
 object State {
 
-  def unit[S,A](a: A): State[S,A] =
-    State[S,A](s => (a,s))
+  def pure[S,A](a: A): State[S,A] =
+    State(s => (a,s))
 
+  def inspect[S,A](f: S => A): State[S,A] =
+    State(s => (f(s),s))
+
+  def bimap[S,A](fa: S => A, fs: S => S): State[S,A] =
+    State(s => (fa(s),fs(s)))
+  
   def get[S]: State[S,S] =
     inspect(identity)
 
@@ -380,10 +389,6 @@ object State {
 
   def modify[S](f: S => S): State[S,Unit] =
     State(s => ((), f(s)))
-
-  def inspect[S,T](f: S => T): State[S,T] =
-    State(s => (f(s),s))
-
 
 }
 
@@ -396,15 +401,15 @@ object assistent {
 
   def number(exp: Exp): State[Int,Exp] = {
     exp match {
-      case Lam(s, e) => for { ne <- number(e) } yield Lam(s, ne)
+      case Lam(s, e) => number(e).map(ne => Lam(s, ne))
       case App(f, a) => for { e1 <- number(f) ; e2 <- number(a) } yield App(e1, e2)
-      case v: Var    => State.inspect(_ => v)
-      case Ann(e, t) => for { ne <- number(e) } yield Ann(ne, t)
-      case Hol.empty => for { nr <- State.get[Int] ; _ <- State.set(nr+1) } yield { println(s"!!! $nr") ; Hol(nr) }
-      case h: Hol    => State.inspect(_ => h)
+      case v: Var    => pure(v)
+      case Ann(e, t) => number(e).map(ne => Ann(ne, t))
+      case Hol.empty => bimap(n => Hol(n), n => n + 1)
+      case h: Hol    => pure(h)
       case Prd(l, r) => for { nl <- number(l) ; nr <- number(r) } yield Prd(nl, nr)
-      case Fst(e)    => for { ne <- number(e) } yield Fst(ne)
-      case Snd(e)    => for { ne <- number(e) } yield Snd(ne)
+      case Fst(e)    => number(e).map(ne => Fst(ne))
+      case Snd(e)    => number(e).map(ne => Snd(ne))
     }
   }
 
