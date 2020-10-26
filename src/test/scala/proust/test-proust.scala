@@ -101,13 +101,13 @@ class ProustTests {
 
   @Test def testProduct(): Unit = {
 
-    val hypothesis: Goal = Goal("(A -> B -> (A && B))")
+    val hypothesis: Goal = Goal("(A -> B -> (A ∧ B))")
 
     val proof: State[Goal,Unit] =
       (for {
         g1 <- refine( 0 , "(λ a => ?)" )
         g2 <- refine( 1 , "(λ b => ?)" )
-        g3 <- refine( 2 , "(* a b)" )
+        g3 <- refine( 2 , "(prd a b)" )
 
         _  <- State.pure(assert(g3.isSolved))
         } yield ())
@@ -116,28 +116,28 @@ class ProustTests {
   }
 
   @Test def testTrivialProductProof(): Unit =
-    proof("(λ a => (λ b => (* a b))) : (A -> B -> A && B)")
+    proof("(λ a => (λ b => (prd a b))) : (A -> B -> A ∧ B)")
 
   @Test def testTrivialProductFst(): Unit =
-    proof("(fst (* (a : A) (b : B))) : A)")
+    proof("(fst (prd (a : A) (b : B))) : A)")
   
   @Test def testTrivialProductSnd(): Unit =
-    proof("(snd (* (a : A) (b : B))) : B)")
+    proof("(snd (prd (a : A) (b : B))) : B)")
 
   @Test def testTrivialProductCommutative(): Unit =
-    proof("((λ c => (* (snd c) (fst c))) : ((A && B) -> (B && A)))")
+    proof("((λ c => (prd (snd c) (fst c))) : ((A ∧ B) -> (B ∧ A)))")
   
   
   @Test def testExercise21(): Unit = {
 
-    val hypothesis: Goal = Goal("(((A && B) -> C) -> (A -> B -> C))")
+    val hypothesis: Goal = Goal("(((A ∧ B) -> C) -> (A -> B -> C))")
 
     val proof: State[Goal,Unit] =
       (for {
         g1 <- refine( 0 , "(λ x => ?)"  )
         g2 <- refine( 1 , "(λ y => ?)"  )
         g3 <- refine( 2 , "(λ z => ?)"  )  
-        g4 <- refine( 3 , "(x (* y z))" )
+        g4 <- refine( 3 , "(x (prd y z))" )
 
         _  <- State.pure(assert(g4.isSolved))
         } yield ())
@@ -147,7 +147,7 @@ class ProustTests {
 
   @Test def testExercise22(): Unit = {
 
-    val hypothesis: Goal = Goal("((A -> B -> C) -> ((A && B) -> C))")
+    val hypothesis: Goal = Goal("((A -> B -> C) -> ((A ∧ B) -> C))")
 
     val proof: State[Goal,Unit] =
       (for {
@@ -163,13 +163,13 @@ class ProustTests {
 
   @Test def testExercise23(): Unit = {
 
-    val hypothesis: Goal = Goal("((A -> B) -> ((A && C) -> (B && C)))")
+    val hypothesis: Goal = Goal("((A -> B) -> ((A ∧ C) -> (B ∧ C)))")
 
     val proof: State[Goal,Unit] =
       (for {
         g1 <- refine( 0 , "(λ x => ?)" )
         g2 <- refine( 1 , "(λ y => ?)" )
-        g3 <- refine( 2 , "(* (x (fst y)) (snd y))" )  
+        g3 <- refine( 2 , "(prd (x (fst y)) (snd y))" )  
 
         _  <- State.pure(assert(g3.isSolved))
         } yield ())
@@ -179,13 +179,13 @@ class ProustTests {
 
   @Test def testExercise24(): Unit = {
 
-    val hypothesis: Goal = Goal("(((A -> B) && (C -> D)) -> ((A && C) -> (B && D)))")
+    val hypothesis: Goal = Goal("(((A -> B) ∧ (C -> D)) -> ((A ∧ C) -> (B ∧ D)))")
 
     val proof: State[Goal,Unit] =
       (for {
         g1 <- refine( 0 , "(λ x => ?)" )
         g2 <- refine( 1 , "(λ y => ?)" )
-        g3 <- refine( 2 , "(* ((fst x) (fst y)) ((snd x) (snd y)))" )  
+        g3 <- refine( 2 , "(prd ((fst x) (fst y)) ((snd x) (snd y)))" )  
 
         _  <- State.pure(assert(g3.isSolved))
         } yield ())
@@ -193,5 +193,10 @@ class ProustTests {
     proof.run(hypothesis)
   }  
 
+  @Test def testTrivialLhsSumProof(): Unit =
+    proof("(λ a => (lhs a)) : (A -> A ∨ B)")
 
+  @Test def testTrivialRhsSumProof(): Unit =
+    proof("(λ b => (rhs b)) : (B -> A ∨ B)")
+  
 }

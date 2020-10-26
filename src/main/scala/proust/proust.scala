@@ -17,6 +17,8 @@ case class Ann(e: Exp, t: Typ) extends Exp
 case class Prd(l: Exp, r: Exp) extends Exp
 case class Fst(e: Exp)         extends Exp
 case class Snd(e: Exp)         extends Exp
+case class Lhs(e: Exp)         extends Exp
+case class Rhs(e: Exp)         extends Exp
 case class Var(n: Name)        extends Sym
 case class Hol(n: Name = "")   extends Sym {
 
@@ -41,7 +43,8 @@ object Hol {
 trait Typ 
 case class Arr(a: Typ, b: Typ) extends Typ
 case class Den(n: Name)        extends Typ
-case class T_*(l: Typ, r: Typ) extends Typ
+case class PTp(l: Typ, r: Typ) extends Typ
+case class STp(l: Typ, r: Typ) extends Typ
 
 // context
 
@@ -78,8 +81,8 @@ object Holes {
   def empty: Holes =
     Holes()
 
-  def init(nr: Int, typ: Typ): Holes =
-    Holes(Map(nr -> (typ -> Map.empty)))
+  def apply(typ: Typ): Holes =
+    Holes(Map(0 -> (typ -> Map.empty)))
 }
 
 case class Goal( current  : Exp
@@ -90,7 +93,6 @@ case class Goal( current  : Exp
                )
 
 object Goal {
-
 
     import disjoining._
     import parser._
@@ -105,7 +107,7 @@ object Goal {
         Ann(Hol(0), hypothesis)
       
       Goal( current  = proof
-          , holes    = init(0, hypothesis)
+          , holes    = Holes(hypothesis)
           , nextNr   = 1
           , isSolved = false
           , trace    = trace
@@ -160,7 +162,7 @@ object parser {
   
   def product: P[Exp] =
     for {
-      _  <- reserved("(*")
+      _  <- reserved("(prd")
       l  <- expression
       r  <- expression
       _  <- reserved(")")
@@ -180,6 +182,20 @@ object parser {
       _  <- reserved(")")
     } yield Snd(e)
   
+  def lhs: P[Exp] =
+    for {
+      _  <- reserved("(lhs")
+      e  <- expression
+      _  <- reserved(")")
+    } yield Lhs(e)
+      
+  def rhs: P[Exp] =
+    for {
+      _  <- reserved("(rhs")
+      e  <- expression
+      _  <- reserved(")")
+    } yield Rhs(e)
+    
   def apprep: P[Exp] = {
     for {
       _  <- reserved("(")
@@ -191,7 +207,7 @@ object parser {
   }
 
   private def bool: P[Exp] =
-    product |!| fst |!| snd
+    product |!| fst |!| snd |!| lhs |!| rhs
 
   def expression: P[Exp] =
     bool |!| lambda |!| hole |!| variable |!| annotation |!| application |!| apprep
@@ -203,10 +219,19 @@ object parser {
     for {
       _ <- reserved("(")
       a <- typ
-      _ <- reserved("&&")
+      _ <- reserved("∧")
       b <- typ
       _ <- reserved(")")
-    } yield T_*(a, b)
+    } yield PTp(a, b)
+    
+  def sumtyp: P[Typ] =
+    for {
+      _ <- reserved("(")
+      a <- typ
+      _ <- reserved("∨")
+      b <- typ
+      _ <- reserved(")")
+    } yield STp(a, b)
   
   def arrow: P[Typ] =
     for {
@@ -237,7 +262,7 @@ object parser {
   }
 
   def typ: P[Typ] =
-    arrow |!| arrrep |!| prdtyp |!| denotation
+    arrow |!| arrrep |!| prdtyp |!| sumtyp |!| denotation
 
   def eparse(s: String): Exp =
     run(expression)(s)
@@ -255,15 +280,18 @@ object printer {
       case Hol(n)     => s"?$n"
       case Var(n)     => n
       case Ann(e,t)   => s"(${ppexp(e)} : ${pptyp(t)})"
-      case Prd(e1,e2) => s"(* ${ppexp(e1)} ${ppexp(e2)})"
+      case Prd(e1,e2) => s"(prd ${ppexp(e1)} ${ppexp(e2)})"
       case Fst(e)     => s"(fst ${ppexp(e)})"
       case Snd(e)     => s"(snd ${ppexp(e)})"
+      case Lhs(e)     => s"(lhs ${ppexp(e)})"
+      case Rhs(e)     => s"(rhs ${ppexp(e)})"
     }
 
   def pptyp(t: Typ): String =
     t match {
       case Den(n)   => n
-      case T_*(a,b) => s"${pptyp(a)} && ${pptyp(b)}"
+      case PTp(a,b) => s"${pptyp(a)} ∧ ${pptyp(b)}"
+      case STp(a,b) => s"${pptyp(a)} ∨ ${pptyp(b)}"
       case Arr(a,b) => s"(${pptyp(a)} -> ${pptyp(b)})"
     }
 
@@ -301,7 +329,7 @@ object typer {
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
-    println(cinfo())
+    // println(cinfo())
 
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
@@ -326,13 +354,13 @@ object typer {
          |ctx: ${ppctx(ctx)}
        """.stripMargin
 
-    println(sinfo())
+    // println(sinfo())
 
     exp match {
       case Lam(_,_)                                 => serror()
       case Hol(_)                                   => serror()
       case Ann(e,t) if check(ctx, e, t, ref)._1     => t
-      case Prd(a,b)                                 => T_*(synth(ctx, a, ref), synth(ctx, b, ref))
+      case Prd(a,b)                                 => PTp(synth(ctx, a, ref), synth(ctx, b, ref))
       case App(f,x)                                 =>
         synth(ctx, f, ref) match {
           case Arr(a,b) if check(ctx, x, a, ref)._1 => b
@@ -341,12 +369,12 @@ object typer {
       case Var(n)                                   => ctx.getOrElse(Var(n), serror())
       case Fst(e)                                   =>
         synth(ctx, e, ref) match {
-          case T_*(l,_)                             => l
+          case PTp(l,_)                             => l
           case _                                    => serror()
         }
       case Snd(e)                                   =>
         synth(ctx, e, ref) match {
-          case T_*(_,r)                             => r
+          case PTp(_,r)                             => r
           case _                                    => serror()
         }
       case _                                        => serror()
@@ -410,6 +438,8 @@ object assistent {
       case Prd(l, r) => for { nl <- number(l) ; nr <- number(r) } yield Prd(nl, nr)
       case Fst(e)    => number(e).map(ne => Fst(ne))
       case Snd(e)    => number(e).map(ne => Snd(ne))
+      case Lhs(e)    => number(e).map(ne => Lhs(ne))
+      case Rhs(e)    => number(e).map(ne => Rhs(ne))
     }
   }
 
@@ -427,6 +457,8 @@ object assistent {
       case Prd(e1,e2) => Prd(replace(nr, rep, e1), replace(nr, rep, e2))
       case Fst(e)     => Fst(replace(nr, rep, e))
       case Snd(e)     => Snd(replace(nr, rep, e))
+      case Lhs(e)     => Lhs(replace(nr, rep, e))
+      case Rhs(e)     => Rhs(replace(nr, rep, e))
     }
 
   def task(task: String): State[Goal,Exp] =

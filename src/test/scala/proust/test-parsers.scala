@@ -188,15 +188,15 @@ class ProustParserTests {
   }  
 
   @Test def testProustParserProduct(): Unit = {
-    assertEquals( Prd(Var("a"),Var("b")) , run(product)("(* a b)"))
+    assertEquals( Prd(Var("a"),Var("b")) , run(product)("(prd a b)"))
   }  
 
   @Test def testProustParserFst(): Unit = {
-    assertEquals( Fst(Prd(Var("a"),Var("b"))) , run(fst)("(fst (* a b))"))
+    assertEquals( Fst(Prd(Var("a"),Var("b"))) , run(fst)("(fst (prd a b))"))
   }  
 
   @Test def testProustParserSnd(): Unit = {
-    assertEquals( Snd(Prd(Var("a"),Var("b"))) , run(snd)("(snd (* a b))"))
+    assertEquals( Snd(Prd(Var("a"),Var("b"))) , run(snd)("(snd (prd a b))"))
   }  
 
   @Test def testProustParserExpr(): Unit = {
@@ -204,8 +204,11 @@ class ProustParserTests {
     assertEquals( App(Var("a"),Var("b"))      , run(expression)("(a  b)"))
     assertEquals( Var("a")                    , run(expression)("a"))
     assertEquals( Ann(Var("a"),Den("A"))      , run(expression)("(a : A)"))
-    assertEquals( Prd(Var("a"),Var("b"))      , run(expression)("(* a b)"))
-    assertEquals( Fst(Prd(Var("a"),Var("b"))) , run(expression)("(fst (* a b))"))
+    assertEquals( Prd(Var("a"),Var("b"))      , run(expression)("(prd a b)"))
+    assertEquals( Fst(Prd(Var("a"),Var("b"))) , run(expression)("(fst (prd a b))"))
+    assertEquals( Snd(Prd(Var("a"),Var("b"))) , run(expression)("(snd (prd a b))"))
+    assertEquals( Lhs(Var("a"))               , run(expression)("(lhs a)"))
+    assertEquals( Rhs(Var("b"))               , run(expression)("(rhs b)"))
     // human readable form employing the observation that application is left-associative
     assertEquals( App(App(Var("a"),Var("b")),Var("c")) , run(expression)("(a b c)"))
   }  
@@ -221,17 +224,23 @@ class ProustParserTests {
     assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> (B -> C))"))
   }  
 
-  @Test def testProustParserT_*(): Unit = { 
-    assertEquals( T_*(Den("A"),Den("B")) , run(prdtyp)("(A && B)"))
+  @Test def testProustParserPtp(): Unit = { 
+    assertEquals( PTp(Den("A"),Den("B")) , run(prdtyp)("(A ∧ B)"))
+  }
+
+  @Test def testProustParserStp(): Unit = { 
+    assertEquals( STp(Den("A"),Den("B")) , run(sumtyp)("(A ∨ B)"))
   }
 
   @Test def testProustParserTyp(): Unit = { 
     assertEquals( Den("A")               , run(typ)("A"))
     assertEquals( Arr(Den("A"),Den("B")) , run(typ)("(A -> B)"))
-    assertEquals( T_*(Den("A"),Den("B")) , run(typ)("(A && B)"))
+    assertEquals( PTp(Den("A"),Den("B")) , run(typ)("(A ∧ B)"))
+    assertEquals( STp(Den("A"),Den("B")) , run(typ)("(A ∨ B)"))
     // human readable form employing the observation that application is right-associative
     assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(typ)("(A -> B -> C)"))
-    // product type has higher precedence than arrow
-    assertEquals( Arr(Den("A"),T_*(Den("B"),Den("C"))) , run(typ)("(A -> (B && C))"))
+    // product and sum types have higher precedence than arrow
+    assertEquals( Arr(Den("A"),PTp(Den("B"),Den("C"))) , run(typ)("(A -> (B ∧ C))"))
+    assertEquals( Arr(Den("A"),STp(Den("B"),Den("C"))) , run(typ)("(A -> (B ∨ C))"))
   }  
 }
