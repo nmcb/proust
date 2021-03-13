@@ -19,7 +19,7 @@ case class Lhs(e: Exp)                 extends Exp
 case class Rhs(e: Exp)                 extends Exp
 case class Sum(i: Exp, l: Exp, r: Exp) extends Exp
 case class Var(n: Name)                extends Sym
-case class Hol(n: Name = "")           extends Sym {
+case class Hol(n: Name)                extends Sym {
 
   def isEmpty: Boolean =
     n == ""
@@ -408,23 +408,23 @@ object assistent {
   import typer._
   import State._
 
-  def number(exp: Exp): State[Int,Exp] = {
+  def holes(exp: Exp): State[Int,Exp] = {
     exp match {
-      case Lam(s,e)   => number(e).map(ne => Lam(s, ne))
-      case App(f,a)   => for { e1 <- number(f) ; e2 <- number(a) } yield App(e1, e2)
+      case Lam(s,e)   => holes(e).map(ne => Lam(s, ne))
+      case App(f,a)   => for {e1 <- holes(f); e2 <- holes(a)} yield App(e1, e2)
       case v: Var     => pure(v)
-      case Ann(e,t)   => number(e).map(ne => Ann(ne, t))
+      case Ann(e,t)   => holes(e).map(ne => Ann(ne, t))
       case Hol.empty  => bimap(n => Hol(n), n => n + 1)
       case h: Hol     => pure(h)
-      case Prd(l,r)   => for { nl <- number(l) ; nr <- number(r) } yield Prd(nl ,nr)
-      case Lhs(e)     => number(e).map(ne => Lhs(ne))
-      case Rhs(e)     => number(e).map(ne => Rhs(ne))
-      case Sum(i,l,r) => for {ni <- number(i); nl <- number(l); nr <- number(r)} yield Sum(ni, nl, nr)
+      case Prd(l,r)   => for {nl <- holes(l); nr <- holes(r)} yield Prd(nl ,nr)
+      case Lhs(e)     => holes(e).map(ne => Lhs(ne))
+      case Rhs(e)     => holes(e).map(ne => Rhs(ne))
+      case Sum(i,l,r) => for {ni <- holes(i); nl <- holes(l); nr <- holes(r)} yield Sum(ni, nl, nr)
     }
   }
 
-  def fpnumber(exp: Exp, ctr: Int): (Exp, Int) =
-    (for { ne <- number(exp) } yield ne).run(ctr)
+  def number(exp: Exp): State[Int,Exp] =
+    (for { ne <- holes(exp)} yield ne)
 
   def replace(nr: Int, rep: Exp, exp: Exp): Exp =
     exp match {
@@ -449,20 +449,19 @@ object assistent {
   def solved: State[Goal,Boolean] =
     State(g => (g.isSolved, g))
 
-  def refine(hole: Int, exp: String): State[Goal,Goal] = {
+  def refine(hole: Int, refinement: String): State[Goal,Goal] = {
 
-    val refinement: Exp =
-      eparse(exp)
-
+    val exp: Exp =
+      eparse(refinement)
       
     State(goal => {
 
       if (goal.trace) println(ppgoal(goal))
 
-      val (t,c)    = goal.holes.get(hole)
-      val _        = check(c, refinement, t)
-      val (ne, nc) = fpnumber(refinement, goal.nextNr)
-      val (_, ctx) = check(c, ne, t, ref = true)
+      val (typ,c)  = goal.holes.get(hole)
+      val _        = check(c, exp, typ)
+      val (ne, nc) = number(exp).run(goal.nextNr)
+      val (_, ctx) = check(c, ne, typ, ref = true)
 
       val ngoal = if (nc != hole+1) {
         val nhole    = ( hole+1 , ctx(Hol(hole+1)) ,  ctx )
