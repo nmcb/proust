@@ -45,7 +45,6 @@ case class P[+A](parse: String => Seq[(A,String)]) {
     
   def foldl[B](b: B)(f: B => A => B): P[B] =
     P(s => parse(s).bind((a,ss) => Seq((f(b)(a),ss))))
-    // P(s => for { (a,s1) <- parse(s) } yield (f(b)(a), s1))
 
   def chainl[A1 >: A](pf: P[A1 => A1 => A1])(a: A1): P[A1] =
     chainl1(pf) |!| unit(a)
@@ -120,7 +119,7 @@ object P {
   def parens[A](pa: P[A]): P[A] =
     for { _ <- reserved("(") ; a <- pa ; _ <- reserved(")") } yield a
   
-  def seperated[A](sep: String, pa: P[A]): P[Seq[A]] =
+  def separated[A](sep: String, pa: P[A]): P[Seq[A]] =
     for { h <- pa ; t <- (reserved(sep) |~| pa).zeroOrMore } yield (h :: t)
   
 }

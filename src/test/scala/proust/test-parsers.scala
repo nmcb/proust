@@ -20,7 +20,7 @@ class ParserTests {
   }
 
   private def gt: P[Char => Char => Char] =
-    unit(x => y => if (x > y) then x else y)
+    unit(x => y => if (x > y) x else y)
 
   @Test def testChainl1(): Unit = {
     assertEquals( '2' , run(digit.chainl1(gt))("12"))
@@ -188,15 +188,15 @@ class ProustParserTests {
   }  
 
   @Test def testProustParserProduct(): Unit = {
-    assertEquals( Prd(Var("a"),Var("b")) , run(product)("(prd a b)"))
+    assertEquals( Prd(Var("a"),Var("b")) , run(product)("(and a b)"))
   }  
 
-  @Test def testProustParserFst(): Unit = {
-    assertEquals( Fst(Prd(Var("a"),Var("b"))) , run(fst)("(fst (prd a b))"))
+  @Test def testProustParserLhs(): Unit = {
+    assertEquals( Lhs(Prd(Var("a"),Var("b"))) , run(lhs)("(lhs (and a b))"))
   }  
 
-  @Test def testProustParserSnd(): Unit = {
-    assertEquals( Snd(Prd(Var("a"),Var("b"))) , run(snd)("(snd (prd a b))"))
+  @Test def testProustParserRhs(): Unit = {
+    assertEquals( Rhs(Prd(Var("a"),Var("b"))) , run(rhs)("(rhs (and a b))"))
   }  
 
   @Test def testProustParserExpr(): Unit = {
@@ -204,12 +204,10 @@ class ProustParserTests {
     assertEquals( App(Var("a"),Var("b"))      , run(expression)("(a  b)"))
     assertEquals( Var("a")                    , run(expression)("a"))
     assertEquals( Ann(Var("a"),Den("A"))      , run(expression)("(a : A)"))
-    assertEquals( Prd(Var("a"),Var("b"))      , run(expression)("(prd a b)"))
-    assertEquals( Fst(Prd(Var("a"),Var("b"))) , run(expression)("(fst (prd a b))"))
-    assertEquals( Snd(Prd(Var("a"),Var("b"))) , run(expression)("(snd (prd a b))"))
-    assertEquals( Lhs(Var("a"))               , run(expression)("(lhs a)"))
-    assertEquals( Rhs(Var("b"))               , run(expression)("(rhs b)"))
-    // human readable form employing the observation that application is left-associative
+    assertEquals( Prd(Var("a"),Var("b"))      , run(expression)("(and a b)"))
+    assertEquals( Lhs(Prd(Var("a"),Var("b"))) , run(expression)("(lhs (and a b))"))
+    assertEquals( Rhs(Prd(Var("a"),Var("b"))) , run(expression)("(rhs (and a b))"))
+    // human readable form employing the intuition that application is left-associative
     assertEquals( App(App(Var("a"),Var("b")),Var("c")) , run(expression)("(a b c)"))
   }  
 
@@ -224,12 +222,12 @@ class ProustParserTests {
     assertEquals( Arr(Den("A"),Arr(Den("B"),Den("C"))) , run(arrow)("(A -> (B -> C))"))
   }  
 
-  @Test def testProustParserPtp(): Unit = { 
-    assertEquals( PTp(Den("A"),Den("B")) , run(prdtyp)("(A ∧ B)"))
+  @Test def testProustParserProductType(): Unit = { 
+    assertEquals( PTp(Den("A"),Den("B")) , run(andtyp)("(A ∧ B)"))
   }
 
-  @Test def testProustParserStp(): Unit = { 
-    assertEquals( STp(Den("A"),Den("B")) , run(sumtyp)("(A ∨ B)"))
+  @Test def testProustParserSumType(): Unit = { 
+    assertEquals( STp(Den("A"),Den("B")) , run(ortyp)("(A ∨ B)"))
   }
 
   @Test def testProustParserTyp(): Unit = { 

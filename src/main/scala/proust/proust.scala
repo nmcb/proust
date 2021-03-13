@@ -11,16 +11,15 @@ sealed trait Exp
 sealed trait Sym extends Exp {
   def n: Name
 }
-case class Lam(s: Sym, e: Exp) extends Exp
-case class App(f: Exp, x: Exp) extends Exp
-case class Ann(e: Exp, t: Typ) extends Exp
-case class Prd(l: Exp, r: Exp) extends Exp
-case class Fst(e: Exp)         extends Exp
-case class Snd(e: Exp)         extends Exp
-case class Lhs(e: Exp)         extends Exp
-case class Rhs(e: Exp)         extends Exp
-case class Var(n: Name)        extends Sym
-case class Hol(n: Name = "")   extends Sym {
+case class Lam(s: Sym, e: Exp)         extends Exp
+case class App(f: Exp, x: Exp)         extends Exp
+case class Ann(e: Exp, t: Typ)         extends Exp
+case class Prd(l: Exp, r: Exp)         extends Exp
+case class Lhs(e: Exp)                 extends Exp
+case class Rhs(e: Exp)                 extends Exp
+case class Sum(i: Exp, l: Exp, r: Exp) extends Exp
+case class Var(n: Name)                extends Sym
+case class Hol(n: Name = "")           extends Sym {
 
   def isEmpty: Boolean =
     n == ""
@@ -162,26 +161,12 @@ object parser {
   
   def product: P[Exp] =
     for {
-      _  <- reserved("(prd")
+      _  <- reserved("(and")
       l  <- expression
       r  <- expression
       _  <- reserved(")")
     } yield Prd(l, r)
 
-  def fst: P[Exp] =
-    for {
-      _  <- reserved("(fst")
-      e  <- expression
-      _  <- reserved(")")
-    } yield Fst(e)
-
-  def snd: P[Exp] =
-    for {
-      _  <- reserved("(snd")
-      e  <- expression
-      _  <- reserved(")")
-    } yield Snd(e)
-  
   def lhs: P[Exp] =
     for {
       _  <- reserved("(lhs")
@@ -206,16 +191,13 @@ object parser {
     } yield es.foldl(App(e1,e2))(a => e => App(a, e))
   }
 
-  private def bool: P[Exp] =
-    product |!| fst |!| snd |!| lhs |!| rhs
-
   def expression: P[Exp] =
-    bool |!| lambda |!| hole |!| variable |!| annotation |!| application |!| apprep
+    product |!| lhs |!| rhs |!| lambda |!| hole |!| variable |!| annotation |!| application |!| apprep
 
   def denotation: P[Den] =
     token(typeName).map(n => Den(n))
 
-  def prdtyp: P[Typ] =
+  def andtyp: P[Typ] =
     for {
       _ <- reserved("(")
       a <- typ
@@ -224,7 +206,7 @@ object parser {
       _ <- reserved(")")
     } yield PTp(a, b)
     
-  def sumtyp: P[Typ] =
+  def ortyp: P[Typ] =
     for {
       _ <- reserved("(")
       a <- typ
@@ -256,13 +238,13 @@ object parser {
       _  <- reserved("->")
       t2 <- typ
       _  <- reserved("->")
-      r  <- seperated("->", typ)
+      r  <- separated("->", typ)
       _  <- reserved(")")
     } yield rassoc(t1 :: t2 :: r)
   }
 
   def typ: P[Typ] =
-    arrow |!| arrrep |!| prdtyp |!| sumtyp |!| denotation
+    arrow |!| arrrep |!| andtyp |!| ortyp |!| denotation
 
   def eparse(s: String): Exp =
     run(expression)(s)
@@ -280,11 +262,10 @@ object printer {
       case Hol(n)     => s"?$n"
       case Var(n)     => n
       case Ann(e,t)   => s"(${ppexp(e)} : ${pptyp(t)})"
-      case Prd(e1,e2) => s"(prd ${ppexp(e1)} ${ppexp(e2)})"
-      case Fst(e)     => s"(fst ${ppexp(e)})"
-      case Snd(e)     => s"(snd ${ppexp(e)})"
+      case Prd(e1,e2) => s"(and ${ppexp(e1)} ${ppexp(e2)})"
       case Lhs(e)     => s"(lhs ${ppexp(e)})"
       case Rhs(e)     => s"(rhs ${ppexp(e)})"
+      case Sum(i,l,r) => s"(or ${ppexp(i)} ${ppexp(l)} ${ppexp(r)})"
     }
 
   def pptyp(t: Typ): String =
@@ -329,7 +310,7 @@ object typer {
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
-    // println(cinfo())
+    println(cinfo())
 
     (exp,typ) match {
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
@@ -354,7 +335,7 @@ object typer {
          |ctx: ${ppctx(ctx)}
        """.stripMargin
 
-    // println(sinfo())
+    println(sinfo())
 
     exp match {
       case Lam(_,_)                                 => serror()
@@ -367,12 +348,12 @@ object typer {
           case _                                    => serror()
         }
       case Var(n)                                   => ctx.getOrElse(Var(n), serror())
-      case Fst(e)                                   =>
+      case Lhs(e)                                   =>
         synth(ctx, e, ref) match {
           case PTp(l,_)                             => l
           case _                                    => serror()
         }
-      case Snd(e)                                   =>
+      case Rhs(e)                                   =>
         synth(ctx, e, ref) match {
           case PTp(_,r)                             => r
           case _                                    => serror()
@@ -429,17 +410,16 @@ object assistent {
 
   def number(exp: Exp): State[Int,Exp] = {
     exp match {
-      case Lam(s, e) => number(e).map(ne => Lam(s, ne))
-      case App(f, a) => for { e1 <- number(f) ; e2 <- number(a) } yield App(e1, e2)
-      case v: Var    => pure(v)
-      case Ann(e, t) => number(e).map(ne => Ann(ne, t))
-      case Hol.empty => bimap(n => Hol(n), n => n + 1)
-      case h: Hol    => pure(h)
-      case Prd(l, r) => for { nl <- number(l) ; nr <- number(r) } yield Prd(nl, nr)
-      case Fst(e)    => number(e).map(ne => Fst(ne))
-      case Snd(e)    => number(e).map(ne => Snd(ne))
-      case Lhs(e)    => number(e).map(ne => Lhs(ne))
-      case Rhs(e)    => number(e).map(ne => Rhs(ne))
+      case Lam(s,e)   => number(e).map(ne => Lam(s, ne))
+      case App(f,a)   => for { e1 <- number(f) ; e2 <- number(a) } yield App(e1, e2)
+      case v: Var     => pure(v)
+      case Ann(e,t)   => number(e).map(ne => Ann(ne, t))
+      case Hol.empty  => bimap(n => Hol(n), n => n + 1)
+      case h: Hol     => pure(h)
+      case Prd(l,r)   => for { nl <- number(l) ; nr <- number(r) } yield Prd(nl ,nr)
+      case Lhs(e)     => number(e).map(ne => Lhs(ne))
+      case Rhs(e)     => number(e).map(ne => Rhs(ne))
+      case Sum(i,l,r) => for {ni <- number(i); nl <- number(l); nr <- number(r)} yield Sum(ni, nl, nr)
     }
   }
 
@@ -455,10 +435,9 @@ object assistent {
       case Hol("")    => sys.error(s"unnumbered hole in expression: $exp")
       case Hol(n)     => if (n.toInt == nr) then rep else Hol(n)
       case Prd(e1,e2) => Prd(replace(nr, rep, e1), replace(nr, rep, e2))
-      case Fst(e)     => Fst(replace(nr, rep, e))
-      case Snd(e)     => Snd(replace(nr, rep, e))
       case Lhs(e)     => Lhs(replace(nr, rep, e))
       case Rhs(e)     => Rhs(replace(nr, rep, e))
+      case Sum(i,l,r) => Sum(replace(nr, rep, i), replace(nr, rep, l), replace(nr, rep, r))
     }
 
   def task(task: String): State[Goal,Exp] =

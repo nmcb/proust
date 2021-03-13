@@ -3,3 +3,6 @@
 .idea/
 .dotty-ide*
 target/
+.bsp/
+.vscode/
+.DS_Store
