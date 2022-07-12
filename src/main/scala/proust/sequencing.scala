@@ -105,7 +105,7 @@ object Seq {
   import scala.List
 
   def apply[A](as: A*): Seq[A] =
-    apply(as.toIterable)
+    apply(as.toSeq)
 
   def apply[A](l: Iterable[A]): Seq[A] =
     l.foldRight(Seq.empty)((a,s) => Cel(a,s))
