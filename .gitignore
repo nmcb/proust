@@ -6,3 +6,5 @@ target/
 .bsp/
 .vscode/
 .DS_Store
+*.bloop/
+*.metals/

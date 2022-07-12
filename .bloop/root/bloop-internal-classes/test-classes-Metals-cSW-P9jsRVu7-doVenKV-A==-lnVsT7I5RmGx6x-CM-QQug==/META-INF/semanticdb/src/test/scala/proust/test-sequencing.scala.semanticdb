@@ -1,295 +1,0 @@
-
-Ã\+src/test/scala/proust/test-sequencing.scala*4
-proust/test/SequencingTests#*SequencingTests€*9
-'proust/test/SequencingTests#`<init>`(). €@*<init>€*6
-&proust/test/SequencingTests#testEnd().*testEnd€*8
-'proust/test/SequencingTests#testCons().*testCons€*<
-)proust/test/SequencingTests#testConcat().*
-testConcat€*:
-(proust/test/SequencingTests#testApply().*	testApply€*D
--proust/test/SequencingTests#testUnapplySeq().*testUnapplySeq€*/
- proust/test/SequencingTests#one. €*one€*/
- proust/test/SequencingTests#two. €*two€*@
-+proust/test/SequencingTests#testFoldLeft().*testFoldLeft€*
-local0*x$1€*
-local1*c€*
-local2*s€*
-local3*a€*B
-,proust/test/SequencingTests#testFoldRight().*testFoldRight€*
-local4*a€*
-local5*x$1€*
-local6*c€*
-local7*s€*6
-&proust/test/SequencingTests#testMap().*testMap€*8
-'proust/test/SequencingTests#testBind().*testBind€*
-local8*a€*>
-*proust/test/SequencingTests#testFlatMap().*testFlatMap€*
-local9*a€*
-local10*b€*@
-+proust/test/SequencingTests#testMkString().*testMkString€2
- proust/2
- proust/test/2
- org/junit/Test.2
- org/junit/Test#2
- 
-org/junit/2
- 
-org/2
- org/junit/Assert#2
- 
-org/junit/2
- 
-org/2*
- proust/test/SequencingTests#25
- 'proust/test/SequencingTests#`<init>`().2 
-	 proust/sequencing.2$
-			 proust/sequencing.Seq.2
- org/junit/Test#24
- &proust/test/SequencingTests#testEnd().2
- scala/Unit#20
- "org/junit/Assert#assertEquals(+1).2,
- proust/sequencing.Seq.apply().2$
- proust/sequencing.Seq.2(
- proust/sequencing.Seq.end.2
- org/junit/Test#25
- 'proust/test/SequencingTests#testCons().2
- scala/Unit#20
- "org/junit/Assert#assertEquals(+1).20
-" ""proust/sequencing.Seq.End.apply().2(
- "proust/sequencing.Seq.End.2(
-3 6proust/sequencing.Seq.end.20
- "org/junit/Assert#assertEquals(+1).20
- "proust/sequencing.Seq.Cel.apply().2(
- proust/sequencing.Seq.Cel.20
-" ""proust/sequencing.Seq.End.apply().2(
- "proust/sequencing.Seq.End.2+
-6 6proust/sequencing.Seq#`::`().2(
-3 6proust/sequencing.Seq.end.20
- "org/junit/Assert#assertEquals(+1).20
- "proust/sequencing.Seq.Cel.apply().2(
- proust/sequencing.Seq.Cel.20
- "proust/sequencing.Seq.Cel.apply().2(
- proust/sequencing.Seq.Cel.20
-" ""proust/sequencing.Seq.End.apply().2(
- "proust/sequencing.Seq.End.2+
-6 6proust/sequencing.Seq#`::`().2(
-3 6proust/sequencing.Seq.end.2
- org/junit/Test#27
- )proust/test/SequencingTests#testConcat().2
- scala/Unit#20
- "org/junit/Assert#assertEquals(+1).2(
-! $proust/sequencing.Seq.end.2+
-3 5proust/sequencing.Seq#`++`().2(
-. 1proust/sequencing.Seq.end.2(
-L Oproust/sequencing.Seq.end.20
- "org/junit/Assert#assertEquals(+1).2+
-$ $proust/sequencing.Seq#`::`().2(
-! $proust/sequencing.Seq.end.2+
-3 5proust/sequencing.Seq#`++`().2(
-. 1proust/sequencing.Seq.end.2+
-O Oproust/sequencing.Seq#`::`().2(
-L Oproust/sequencing.Seq.end.20
- "org/junit/Assert#assertEquals(+1).2+
-$ $proust/sequencing.Seq#`::`().2(
-! $proust/sequencing.Seq.end.2+
-3 5proust/sequencing.Seq#`++`().2+
-1 1proust/sequencing.Seq#`::`().2(
-. 1proust/sequencing.Seq.end.2(
-L Oproust/sequencing.Seq.end.20
- "org/junit/Assert#assertEquals(+1).2+
-$ $proust/sequencing.Seq#`::`().2(
-! $proust/sequencing.Seq.end.2+
-3 5proust/sequencing.Seq#`++`().2+
-1 1proust/sequencing.Seq#`::`().2(
-. 1proust/sequencing.Seq.end.2+
-O Oproust/sequencing.Seq#`::`().2(
-L Oproust/sequencing.Seq.end.20
- "org/junit/Assert#assertEquals(+1).2+
-$ $proust/sequencing.Seq#`::`().2(
-! $proust/sequencing.Seq.end.2+
-C Eproust/sequencing.Seq#`++`().2+
-3 5proust/sequencing.Seq#`++`().2+
-1 1proust/sequencing.Seq#`::`().2(
-. 1proust/sequencing.Seq.end.2+
-@ @proust/sequencing.Seq#`::`().2(
-= @proust/sequencing.Seq.end.2+
-O Oproust/sequencing.Seq#`::`().2(
-L Oproust/sequencing.Seq.end.20
- "org/junit/Assert#assertEquals(+1).2+
-$ $proust/sequencing.Seq#`::`().2(
-! $proust/sequencing.Seq.end.2+
-3 5proust/sequencing.Seq#`++`().2+
-1 1proust/sequencing.Seq#`::`().2(
-. 1proust/sequencing.Seq.end.2+
-C Eproust/sequencing.Seq#`++`().2+
-@ @proust/sequencing.Seq#`::`().2(
-= @proust/sequencing.Seq.end.2+
-O Oproust/sequencing.Seq#`::`().2(
-L Oproust/sequencing.Seq.end.2
- org/junit/Test#26
- (proust/test/SequencingTests#testApply().2
- scala/Unit#20
- "org/junit/Assert#assertEquals(+1).20
-! !"proust/sequencing.Seq.End.apply().2(
- !proust/sequencing.Seq.End.2,
-+ +proust/sequencing.Seq.apply().2$
-( +proust/sequencing.Seq.20
-   "org/junit/Assert#assertEquals(+1).20
-   "proust/sequencing.Seq.Cel.apply().2(
-   proust/sequencing.Seq.Cel.20
- !  !"proust/sequencing.Seq.End.apply().2(
-   !proust/sequencing.Seq.End.2,
- +  +proust/sequencing.Seq.apply().2$
- (  +proust/sequencing.Seq.20
-!! "org/junit/Assert#assertEquals(+1).20
-!! "proust/sequencing.Seq.Cel.apply().2(
-!! proust/sequencing.Seq.Cel.20
-!! "proust/sequencing.Seq.Cel.apply().2(
-!! proust/sequencing.Seq.Cel.20
-!!! !"proust/sequencing.Seq.End.apply().2(
-!! !proust/sequencing.Seq.End.2,
-!+! +proust/sequencing.Seq.apply().2$
-!(! +proust/sequencing.Seq.2
-$$ org/junit/Test#2;
-$$ -proust/test/SequencingTests#testUnapplySeq().2
-$$ "scala/Unit#20
-%% "org/junit/Assert#assertEquals(+1).2!
-%% scala/Some.apply().2
-%% scala/Some.26
-%% !(scala/collection/immutable/List.empty().2!
-%% scala/package.List.21
-%)% 3#proust/sequencing.Seq.unapplySeq().2$
-%%% (proust/sequencing.Seq.2,
-%7% 7proust/sequencing.Seq.apply().2$
-%4% 7proust/sequencing.Seq.20
-&& "org/junit/Assert#assertEquals(+1).2!
-&& scala/Some.apply().2
-&& scala/Some.27
-&& )scala/collection/IterableFactory#apply().2!
-&& scala/package.List.21
-&)& 3#proust/sequencing.Seq.unapplySeq().2$
-&%& (proust/sequencing.Seq.2,
-&7& 7proust/sequencing.Seq.apply().2$
-&4& 7proust/sequencing.Seq.20
-'' "org/junit/Assert#assertEquals(+1).2!
-'' scala/Some.apply().2
-'' scala/Some.27
-'' )scala/collection/IterableFactory#apply().2!
-'' scala/package.List.21
-')' 3#proust/sequencing.Seq.unapplySeq().2$
-'%' (proust/sequencing.Seq.2,
-'7' 7proust/sequencing.Seq.apply().2$
-'4' 7proust/sequencing.Seq.2.
-))  org/junit/Assert#assertTrue(+1).2,
-)) proust/sequencing.Seq.apply().2$
-)) proust/sequencing.Seq.21
-))) )#proust/sequencing.Seq.unapplySeq().2$
-)&) )proust/sequencing.Seq.2.
-**  org/junit/Assert#assertTrue(+1).2,
-** proust/sequencing.Seq.apply().2$
-** proust/sequencing.Seq.21
-*)* )#proust/sequencing.Seq.unapplySeq().2$
-*&* )proust/sequencing.Seq.2.
-++  org/junit/Assert#assertTrue(+1).2,
-++ proust/sequencing.Seq.apply().2$
-++ proust/sequencing.Seq.21
-+)+ )#proust/sequencing.Seq.unapplySeq().2$
-+&+ )proust/sequencing.Seq.2.
-.. 	 proust/test/SequencingTests#one.2+
-.. proust/sequencing.Seq#`::`().2(
-.. proust/sequencing.Seq.end.2.
-// 	 proust/test/SequencingTests#two.2+
-// proust/sequencing.Seq#`::`().2(
-// proust/sequencing.Seq.end.2
-11 org/junit/Test#29
-11 +proust/test/SequencingTests#testFoldLeft().2
-11  scala/Unit#20
-22 "org/junit/Assert#assertEquals(+1).2#
-22 scala/Tuple2.apply().2,
-2#2 (proust/sequencing.Seq#foldl().2.
-22 " proust/test/SequencingTests#two.2#
-2*2 *scala/Tuple2.apply().2
-222 3local12
-222 2scala/Tuple2#_1.2
-242 5local22
-242 4scala/Tuple2#_2.2
-2:2 ;local32#
-2@2 @scala/Tuple2.apply().2 
-2B2 Cscala/Int#`+`(+4).2
-2@2 Alocal12%
-2M2 Njava/lang/String#`+`().2%
-2I2 Jjava/lang/String#`+`().2
-2G2 Hlocal22
-2K2 Llocal12
-2O2 Plocal32
-55 org/junit/Test#2:
-55 ,proust/test/SequencingTests#testFoldRight().2
-55 !scala/Unit#20
-66 "org/junit/Assert#assertEquals(+1).2#
-66 scala/Tuple2.apply().2,
-6#6 (proust/sequencing.Seq#foldr().2.
-66 " proust/test/SequencingTests#two.2#
-6*6 *scala/Tuple2.apply().2
-616 2local42
-676 8local62
-676 7scala/Tuple2#_1.2
-696 :local72
-696 9scala/Tuple2#_2.2#
-6@6 @scala/Tuple2.apply().2 
-6B6 Cscala/Int#`+`(+4).2
-6@6 Alocal62%
-6M6 Njava/lang/String#`+`().2%
-6I6 Jjava/lang/String#`+`().2
-6G6 Hlocal72
-6K6 Llocal62
-6O6 Plocal42
-99 org/junit/Test#24
-99 &proust/test/SequencingTests#testMap().2
-99 scala/Unit#20
-:: "org/junit/Assert#assertEquals(+1).2+
-:#: #proust/sequencing.Seq#`::`().2(
-: : #proust/sequencing.Seq.end.2*
-:*: -proust/sequencing.Seq#map().2.
-:&: ) proust/test/SequencingTests#two.2#
-:0: 8scala/Any#toString().2
-== org/junit/Test#25
-== 'proust/test/SequencingTests#testBind().2
-== scala/Unit#20
->> "org/junit/Assert#assertEquals(+1).2+
->)> )proust/sequencing.Seq#`::`().2(
->&> )proust/sequencing.Seq.end.2+
->0> 4proust/sequencing.Seq#bind().2.
->,> / proust/test/SequencingTests#two.2
->5> 6local82,
->=> =proust/sequencing.Seq.apply().2$
->:> =proust/sequencing.Seq.2
->>> ?local82
->@> Alocal82
-AA org/junit/Test#28
-AA *proust/test/SequencingTests#testFlatMap().2
-AA scala/Unit#20
-BB "org/junit/Assert#assertEquals(+1).2+
-B)B )proust/sequencing.Seq#`::`().2(
-B&B )proust/sequencing.Seq.end.2.
-CC  proust/sequencing.Seq#flatMap().2,
-CC proust/sequencing.Seq.apply().2$
-CC proust/sequencing.Seq.2
-CC local92*
-DD proust/sequencing.Seq#map().2,
-DD proust/sequencing.Seq.apply().2$
-DD proust/sequencing.Seq.2
-DD local102 
-EE scala/Int#`+`(+4).2
-EE local92
-EE local102
-HH org/junit/Test#29
-HH +proust/test/SequencingTests#testMkString().2
-HH  scala/Unit#20
-II "org/junit/Assert#assertEquals(+1).2/
-I%I -!proust/sequencing.Seq#mkString().2,
-II proust/sequencing.Seq.apply().2$
-II proust/sequencing.Seq.20
-JJ "org/junit/Assert#assertEquals(+1).21
-J)J 1#proust/sequencing.Seq#mkString(+1).2,
-J!J !proust/sequencing.Seq.apply().2$
-JJ !proust/sequencing.Seq.PZ 8DC5F0D6DEA37DCF1CC5750485279A1F

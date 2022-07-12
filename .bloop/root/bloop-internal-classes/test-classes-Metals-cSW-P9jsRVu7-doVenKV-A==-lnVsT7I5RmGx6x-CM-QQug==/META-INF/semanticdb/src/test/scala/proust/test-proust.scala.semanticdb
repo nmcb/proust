@@ -1,663 +1,0 @@
-
-÷€'src/test/scala/proust/test-proust.scala*,
-proust/test/ProustTests#*ProustTests€*5
-#proust/test/ProustTests#`<init>`(). €@*<init>€*.
- proust/test/ProustTests#proof().*proof€*-
-#proust/test/ProustTests#proof().(p)*p€*6
-$proust/test/ProustTests#testProof().*	testProof€*8
-%proust/test/ProustTests#testNumber().*
-testNumber€*
-local0 €*fix€*
-local1 €*exp€*8
-%proust/test/ProustTests#testRefine().*
-testRefine€*
-local2 €*
-hypothesis€*
-local3 €*proof€*
-local4*g1€*
-local5*g2€*
-local6*g3€*
-local7*x$1€*@
-)proust/test/ProustTests#testExercise01().*testExercise01€*
-local8 €*
-hypothesis€*
-local9 €*proof€*
-local10*g1€*
-local11*g2€*
-local12*g3€*
-local13*g4€*
-local14*x$1€*@
-)proust/test/ProustTests#testExercise02().*testExercise02€*
-local15 €*
-hypothesis€*
-local16 €*proof€*
-local17*g1€*
-local18*g2€*
-local19*g3€*
-local20*g4€*
-local21*g5€*
-local22*x$1€*@
-)proust/test/ProustTests#testExercise03().*testExercise03€*
-local23 €*
-hypothesis€*
-local24 €*proof€*
-local25*g1€*
-local26*g2€*
-local27*g3€*
-local28*g4€*
-local29*x$1€*:
-&proust/test/ProustTests#testProduct().*testProduct€*
-local30 €*
-hypothesis€*
-local31 €*proof€*
-local32*g1€*
-local33*g2€*
-local34*g3€*
-local35*x$1€*R
-2proust/test/ProustTests#testTrivialProductProof().*testTrivialProductProof€*N
-0proust/test/ProustTests#testTrivialProductFst().*testTrivialProductFst€*N
-0proust/test/ProustTests#testTrivialProductSnd().*testTrivialProductSnd€*^
-8proust/test/ProustTests#testTrivialProductCommutative().*testTrivialProductCommutative€*@
-)proust/test/ProustTests#testExercise21().*testExercise21€*
-local36 €*
-hypothesis€*
-local37 €*proof€*
-local38*g1€*
-local39*g2€*
-local40*g3€*
-local41*g4€*
-local42*x$1€*@
-)proust/test/ProustTests#testExercise22().*testExercise22€*
-local43 €*
-hypothesis€*
-local44 €*proof€*
-local45*g1€*
-local46*g2€*
-local47*g3€*
-local48*x$1€*@
-)proust/test/ProustTests#testExercise23().*testExercise23€*
-local49 €*
-hypothesis€*
-local50 €*proof€*
-local51*g1€*
-local52*g2€*
-local53*g3€*
-local54*x$1€*@
-)proust/test/ProustTests#testExercise24().*testExercise24€*
-local55 €*
-hypothesis€*
-local56 €*proof€*
-local57*g1€*
-local58*g2€*
-local59*g3€*
-local60*x$1€*P
-1proust/test/ProustTests#testTrivialLhsSumProof().*testTrivialLhsSumProof€*P
-1proust/test/ProustTests#testTrivialRhsSumProof().*testTrivialRhsSumProof€*J
-.proust/test/ProustTests#testTrivialOreProof().*testTrivialOreProof€*`
-9proust/test/ProustTests#testTrivialSumCummutativeProof().*testTrivialSumCummutativeProof€2
- proust/2
- proust/test/2
- org/junit/Test.2
- org/junit/Test#2
- 
-org/junit/2
- 
-org/2
- org/junit/Assert#2
- 
-org/junit/2
- 
-org/2&
- proust/test/ProustTests#21
- #proust/test/ProustTests#`<init>`().2'
- proust/disjoining.option.2 
-	 proust/disjoining.2+
-			 proust/disjoining.option.Opt.2
-	 proust/printer.2
-	 proust/parser.2
-	 proust/typer.2
-	 proust/assistent.2.
-  proust/test/ProustTests#proof().21
- #proust/test/ProustTests#proof().(p)2"
- scala/Predef.String#2
-  'scala/Boolean#2)
- scala/util/Try#getOrElse().2#
- 
-scala/util/Try#map().2%
-
- 
-scala/util/Try.apply().2
- 
-scala/util/Try.2
-
- scala/util/2
- 	scala/2#
- proust/typer.synth().25
- 'scala/collection/immutable/Map.empty().2
- scala/Predef.Map.2%
- "proust/parser.eparse().21
-# $#proust/test/ProustTests#proof().(p)2
- org/junit/Test#22
- $proust/test/ProustTests#testProof().2
- scala/Unit#2.
- 
- proust/test/ProustTests#proof().2.
- 
- proust/test/ProustTests#proof().2
- org/junit/Test#23
- %proust/test/ProustTests#testNumber().2
- scala/Unit#2
-	 local02!
- proust/Lam.apply().2
- proust/Lam.2!
- proust/Var.apply().2
- proust/Var.2!
- proust/App.apply().2
- proust/App.2
-$ )proust/Hol.empty.2
-  #proust/Hol.2
-. 3proust/Hol.empty.2
-* -proust/Hol.2
-	 local12!
- proust/Lam.apply().2
- proust/Lam.2!
- proust/Var.apply().2
- proust/Var.2!
- proust/App.apply().2
- proust/App.2#
-# #proust/Hol.apply(+1).2
-  #proust/Hol.2#
-* *proust/Hol.apply(+1).2
-' *proust/Hol.20
- "org/junit/Assert#assertEquals(+1).2#
- scala/Tuple2.apply().2
- local12&
-- -scala/Function1#apply().2
-* -proust/State#run.2(
- $proust/assistent.number().2
-% (local02
-!! org/junit/Test#23
-!! %proust/test/ProustTests#testRefine().2
-!! scala/Unit#2
-#	# local22
-## proust/Goal#2$
-# #  proust/Goal.apply(+1).2
-##  proust/Goal.2
-%	% local32
-%% proust/State#2
-%% proust/Goal#2
-%% scala/Unit#2%
-')' )proust/State#flatMap().2(
-'' proust/assistent.refine().2
-'	' local42%
-()( )proust/State#flatMap().2(
-(( proust/assistent.refine().2
-(	( local52%
-))) )proust/State#flatMap().2(
-)) proust/assistent.refine().2
-)	) local62!
-+.+ .proust/State#map().2"
-++ proust/State.pure().2
-++ proust/State.2&
-++  scala/Predef.assert(+1).2#
-+$+ ,proust/Goal#isSolved.2
-+!+ #local62
-+	+ 	local72&
-.. scala/Function1#apply().2
-.. proust/State#run.2
-.. 
-local32
-.. local22
-11 org/junit/Test#27
-11 )proust/test/ProustTests#testExercise01().2
-11 #scala/Unit#2
-3	3 local82
-33 proust/Goal#2$
-3 3  proust/Goal.apply(+1).2
-33  proust/Goal.2
-5	5 local92
-55 proust/State#2
-55 proust/Goal#2
-55 scala/Unit#2%
-7)7 )proust/State#flatMap().2(
-77 proust/assistent.refine().2
-7	7 local102%
-8)8 )proust/State#flatMap().2(
-88 proust/assistent.refine().2
-8	8 local112%
-9)9 )proust/State#flatMap().2(
-99 proust/assistent.refine().2
-9	9 local122%
-:,: ,proust/State#flatMap().2(
-:: proust/assistent.refine().2
-:	: local132!
-<.< .proust/State#map().2"
-<< proust/State.pure().2
-<< proust/State.2&
-<<  scala/Predef.assert(+1).2#
-<$< ,proust/Goal#isSolved.2
-<!< #local132
-<	< 	local142&
-?? scala/Function1#apply().2
-?? proust/State#run.2
-?? 
-local92
-?? local82
-BB org/junit/Test#27
-BB )proust/test/ProustTests#testExercise02().2
-BB #scala/Unit#2
-D	D local152
-DD proust/Goal#2$
-D D  proust/Goal.apply(+1).2
-DD  proust/Goal.2
-F	F local162
-FF proust/State#2
-FF proust/Goal#2
-FF scala/Unit#2%
-H)H )proust/State#flatMap().2(
-HH proust/assistent.refine().2
-H	H local172%
-I)I )proust/State#flatMap().2(
-II proust/assistent.refine().2
-I	I local182%
-J)J )proust/State#flatMap().2(
-JJ proust/assistent.refine().2
-J	J local192%
-K)K )proust/State#flatMap().2(
-KK proust/assistent.refine().2
-K	K local202%
-L$L $proust/State#flatMap().2(
-LL proust/assistent.refine().2
-L	L local212!
-N.N .proust/State#map().2"
-NN proust/State.pure().2
-NN proust/State.2&
-NN  scala/Predef.assert(+1).2#
-N$N ,proust/Goal#isSolved.2
-N!N #local212
-N	N 	local222&
-QQ scala/Function1#apply().2
-QQ proust/State#run.2
-QQ 
-local162
-QQ local152
-TT org/junit/Test#27
-TT )proust/test/ProustTests#testExercise03().2
-TT #scala/Unit#2
-V	V local232
-VV proust/Goal#2$
-V V  proust/Goal.apply(+1).2
-VV  proust/Goal.2
-X	X local242
-XX proust/State#2
-XX proust/Goal#2
-XX scala/Unit#2%
-Z)Z )proust/State#flatMap().2(
-ZZ proust/assistent.refine().2
-Z	Z local252%
-[)[ )proust/State#flatMap().2(
-[[ proust/assistent.refine().2
-[	[ local262%
-\)\ )proust/State#flatMap().2(
-\\ proust/assistent.refine().2
-\	\ local272%
-](] (proust/State#flatMap().2(
-]] proust/assistent.refine().2
-]	] local282!
-_._ .proust/State#map().2"
-__ proust/State.pure().2
-__ proust/State.2&
-__  scala/Predef.assert(+1).2#
-_$_ ,proust/Goal#isSolved.2
-_!_ #local282
-_	_ 	local292&
-bb scala/Function1#apply().2
-bb proust/State#run.2
-bb 
-local242
-bb local232
-ee org/junit/Test#24
-ee &proust/test/ProustTests#testProduct().2
-ee  scala/Unit#2
-g	g local302
-gg proust/Goal#2$
-g g  proust/Goal.apply(+1).2
-gg  proust/Goal.2
-i	i local312
-ii proust/State#2
-ii proust/Goal#2
-ii scala/Unit#2%
-k)k )proust/State#flatMap().2(
-kk proust/assistent.refine().2
-k	k local322%
-l)l )proust/State#flatMap().2(
-ll proust/assistent.refine().2
-l	l local332%
-m(m (proust/State#flatMap().2(
-mm proust/assistent.refine().2
-m	m local342!
-o.o .proust/State#map().2"
-oo proust/State.pure().2
-oo proust/State.2&
-oo  scala/Predef.assert(+1).2#
-o$o ,proust/Goal#isSolved.2
-o!o #local342
-o	o 	local352&
-rr scala/Function1#apply().2
-rr proust/State#run.2
-rr 
-local312
-rr local302
-uu org/junit/Test#2@
-uu $2proust/test/ProustTests#testTrivialProductProof().2
-u(u ,scala/Unit#2.
-vv 
- proust/test/ProustTests#proof().2
-xx org/junit/Test#2>
-xx "0proust/test/ProustTests#testTrivialProductFst().2
-x&x *scala/Unit#2.
-yy 
- proust/test/ProustTests#proof().2
-{{ org/junit/Test#2>
-{{ "0proust/test/ProustTests#testTrivialProductSnd().2
-{&{ *scala/Unit#2.
-|| 
- proust/test/ProustTests#proof().2
-~~ org/junit/Test#2F
-~~ *8proust/test/ProustTests#testTrivialProductCommutative().2
-~.~ 2scala/Unit#2.
- 
- proust/test/ProustTests#proof().2
-
-‚‚ org/junit/Test#29
-
-‚‚ )proust/test/ProustTests#testExercise21().2
-
-‚‚ #scala/Unit#2
-
-„	„ local362
-
-„„ proust/Goal#2&
-
-„ „  proust/Goal.apply(+1).2
-
-„„  proust/Goal.2
-
-†	† local372
-
-†† proust/State#2
-
-†† proust/Goal#2
-
-†† scala/Unit#2'
-
-ˆ*ˆ *proust/State#flatMap().2*
-
-ˆˆ proust/assistent.refine().2
-
-ˆ	ˆ local382'
-
-‰*‰ *proust/State#flatMap().2*
-
-‰‰ proust/assistent.refine().2
-
-‰	‰ local392'
-
-Š*Š *proust/State#flatMap().2*
-
-ŠŠ proust/assistent.refine().2
-
-Š	Š local402'
-
-‹,‹ ,proust/State#flatMap().2*
-
-‹‹ proust/assistent.refine().2
-
-‹	‹ local412#
-
-. .proust/State#map().2$
-
- proust/State.pure().2
-
- proust/State.2(
-
-  scala/Predef.assert(+1).2%
-
-$ ,proust/Goal#isSolved.2
-
-! #local412
-
-	 	local422(
-
- scala/Function1#apply().2!
-
- proust/State#run.2
-
- 
-local372
-
- local362
-
-““ org/junit/Test#29
-
-““ )proust/test/ProustTests#testExercise22().2
-
-““ #scala/Unit#2
-
-•	• local432
-
-•• proust/Goal#2&
-
-• •  proust/Goal.apply(+1).2
-
-••  proust/Goal.2
-
-—	— local442
-
-—— proust/State#2
-
-—— proust/Goal#2
-
-—— scala/Unit#2'
-
-™)™ )proust/State#flatMap().2*
-
-™™ proust/assistent.refine().2
-
-™	™ local452'
-
-š)š )proust/State#flatMap().2*
-
-šš proust/assistent.refine().2
-
-š	š local462'
-
-›4› 4proust/State#flatMap().2*
-
-›› proust/assistent.refine().2
-
-›	› local472#
-
-. .proust/State#map().2$
-
- proust/State.pure().2
-
- proust/State.2(
-
-  scala/Predef.assert(+1).2%
-
-$ ,proust/Goal#isSolved.2
-
-! #local472
-
-	 	local482(
-
-   scala/Function1#apply().2!
-
-   proust/State#run.2
-
-   
-local442
-
-   local432
-
-££ org/junit/Test#29
-
-££ )proust/test/ProustTests#testExercise23().2
-
-££ #scala/Unit#2
-
-¥	¥ local492
-
-¥¥ proust/Goal#2&
-
-¥ ¥  proust/Goal.apply(+1).2
-
-¥¥  proust/Goal.2
-
-§	§ local502
-
-§§ proust/State#2
-
-§§ proust/Goal#2
-
-§§ scala/Unit#2'
-
-©)© )proust/State#flatMap().2*
-
-©© proust/assistent.refine().2
-
-©	© local512'
-
-ª)ª )proust/State#flatMap().2*
-
-ªª proust/assistent.refine().2
-
-ª	ª local522'
-
-«8« 8proust/State#flatMap().2*
-
-«« proust/assistent.refine().2
-
-«	« local532#
-
-­.­ .proust/State#map().2$
-
-­­ proust/State.pure().2
-
-­­ proust/State.2(
-
-­­  scala/Predef.assert(+1).2%
-
-­$­ ,proust/Goal#isSolved.2
-
-­!­ #local532
-
-­	­ 	local542(
-
-°° scala/Function1#apply().2!
-
-°° proust/State#run.2
-
-°° 
-local502
-
-°° local492
-
-³³ org/junit/Test#29
-
-³³ )proust/test/ProustTests#testExercise24().2
-
-³³ #scala/Unit#2
-
-µ	µ local552
-
-µµ proust/Goal#2&
-
-µ µ  proust/Goal.apply(+1).2
-
-µµ  proust/Goal.2
-
-·	· local562
-
-·· proust/State#2
-
-·· proust/Goal#2
-
-·· scala/Unit#2'
-
-¹)¹ )proust/State#flatMap().2*
-
-¹¹ proust/assistent.refine().2
-
-¹	¹ local572'
-
-º)º )proust/State#flatMap().2*
-
-ºº proust/assistent.refine().2
-
-º	º local582'
-
-»H» Hproust/State#flatMap().2*
-
-»» proust/assistent.refine().2
-
-»	» local592#
-
-½.½ .proust/State#map().2$
-
-½½ proust/State.pure().2
-
-½½ proust/State.2(
-
-½½  scala/Predef.assert(+1).2%
-
-½$½ ,proust/Goal#isSolved.2
-
-½!½ #local592
-
-½	½ 	local602(
-
-ÀÀ scala/Function1#apply().2!
-
-ÀÀ proust/State#run.2
-
-ÀÀ 
-local562
-
-ÀÀ local552
-
-ÃÃ org/junit/Test#2A
-
-ÃÃ #1proust/test/ProustTests#testTrivialLhsSumProof().2
-
-Ã'Ã +scala/Unit#20
-
-ÄÄ 
- proust/test/ProustTests#proof().2
-
-ÆÆ org/junit/Test#2A
-
-ÆÆ #1proust/test/ProustTests#testTrivialRhsSumProof().2
-
-Æ'Æ +scala/Unit#20
-
-ÇÇ 
- proust/test/ProustTests#proof().2
-
-ÉÉ org/junit/Test#2>
-
-ÉÉ .proust/test/ProustTests#testTrivialOreProof().2
-
-É#É 'scala/Unit#20
-
-ÊÊ 	 proust/test/ProustTests#proof().2
-
-ÌÌ org/junit/Test#2I
-
-ÌÌ +9proust/test/ProustTests#testTrivialSumCummutativeProof().2
-
-Ì/Ì 3scala/Unit#20
-
-ÍÍ 
- proust/test/ProustTests#proof().PZ 3D672B6CE336C55C0F7690232E2052A5
