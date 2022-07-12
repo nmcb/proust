@@ -1,5 +1,5 @@
 # proust
-Logic And 'Computation Intertwined, inspired by (STOLEN FROM) the excellent https://cs.uwaterloo.ca/~plragde/flaneries/LACI/
+Logic And 'Computation Intertwined, inspired by (STOLEN FROM) thi excellent [flanerie](https://cs.uwaterloo.ca/~plragde/flaneries/LACI/)
 
 ---
 
