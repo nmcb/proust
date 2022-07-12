@@ -1,0 +1,74 @@
+
+û)src/test/scala/proust/test-printers.scala*.
+proust/test/PrinterTests#*PrinterTests€*6
+$proust/test/PrinterTests#`<init>`(). €@*<init>€*=
+(proust/test/PrinterTests#testPrintExp().*testPrintExp€*=
+(proust/test/PrinterTests#testPrintTyp().*testPrintTyp€2
+ proust/2
+ proust/test/2
+ org/junit/Test.2
+ org/junit/Test#2
+ 
+org/junit/2
+ 
+org/2
+ org/junit/Assert#2
+ 
+org/junit/2
+ 
+org/2'
+ proust/test/PrinterTests#22
+ $proust/test/PrinterTests#`<init>`().2
+	 proust/printer.2
+
+
+ org/junit/Test#26
+
+
+ (proust/test/PrinterTests#testPrintExp().2
+
+
+  scala/Unit#20
+ "org/junit/Assert#assertEquals(+1).2%
+! &proust/printer.ppexp().2!
+* *proust/Lam.apply().2
+' *proust/Lam.2!
+. .proust/Var.apply().2
++ .proust/Var.2!
+7 7proust/Var.apply().2
+4 7proust/Var.20
+ "org/junit/Assert#assertEquals(+1).2%
+! &proust/printer.ppexp().2!
+* *proust/App.apply().2
+' *proust/App.2!
+. .proust/Var.apply().2
++ .proust/Var.2!
+7 7proust/Var.apply().2
+4 7proust/Var.20
+ "org/junit/Assert#assertEquals(+1).2%
+! &proust/printer.ppexp().2!
+* *proust/Ann.apply().2
+' *proust/Ann.2!
+. .proust/Var.apply().2
++ .proust/Var.2!
+7 7proust/Den.apply().2
+4 7proust/Den.20
+ "org/junit/Assert#assertEquals(+1).2%
+! &proust/printer.ppexp().2!
+* *proust/Var.apply().2
+' *proust/Var.2
+ org/junit/Test#26
+ (proust/test/PrinterTests#testPrintTyp().2
+  scala/Unit#20
+ "org/junit/Assert#assertEquals(+1).2%
+ $proust/printer.pptyp().2!
+( (proust/Arr.apply().2
+% (proust/Arr.2!
+, ,proust/Den.apply().2
+) ,proust/Den.2!
+5 5proust/Den.apply().2
+2 5proust/Den.20
+ "org/junit/Assert#assertEquals(+1).2%
+ $proust/printer.pptyp().2!
+( (proust/Den.apply().2
+% (proust/Den.PZ FF608146FFB2A385DB5811576008ADB5

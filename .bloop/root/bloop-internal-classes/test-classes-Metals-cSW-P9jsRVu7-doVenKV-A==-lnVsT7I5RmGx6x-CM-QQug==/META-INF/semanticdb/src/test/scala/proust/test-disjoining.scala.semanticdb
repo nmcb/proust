@@ -1,0 +1,35 @@
+
+ÿ	+src/test/scala/proust/test-disjoining.scala*4
+proust/test/DisjoiningTests#*DisjoiningTests€*9
+'proust/test/DisjoiningTests#`<init>`(). €@*<init>€*H
+/proust/test/DisjoiningTests#testOptGetOrElse().*testOptGetOrElse€2
+ proust/2
+ proust/test/2
+ org/junit/Test.2
+ org/junit/Test#2
+ 
+org/junit/2
+ 
+org/2
+ org/junit/Assert#2
+ 
+org/junit/2
+ 
+org/2*
+ proust/test/DisjoiningTests#25
+ 'proust/test/DisjoiningTests#`<init>`().2 
+	 proust/disjoining.2'
+			 proust/disjoining.option.2
+ org/junit/Test#2=
+ /proust/test/DisjoiningTests#testOptGetOrElse().2
+  $scala/Unit#20
+ "org/junit/Assert#assertEquals(+4).2#
+ scala/Int.int2long().27
+ ')proust/disjoining.option.Opt#getOrElse().2/
+ !proust/disjoining.option.Opt.non.2+
+ proust/disjoining.option.Opt.20
+ "org/junit/Assert#assertEquals(+4).2#
+ scala/Int.int2long().27
+ &)proust/disjoining.option.Opt#getOrElse().23
+ %proust/disjoining.option.Opt.apply().2+
+ proust/disjoining.option.Opt.PZ A37BA1651DA603A50E0074515D8394E8
