@@ -1,4 +1,4 @@
-name: Scala CI
+name: Scala Build
 
 on:
   push:
@@ -18,5 +18,5 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-    - name: Run tests
+    - name: Test
       run: sbt test
