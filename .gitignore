@@ -1,7 +1,6 @@
 *.class
 *.log
 .idea/
-.dotty-ide*
 target/
 .bsp/
 .vscode/
