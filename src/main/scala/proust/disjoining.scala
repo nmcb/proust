@@ -16,9 +16,7 @@ object disjoining:
     def isRight: Boolean = true
 
   object option:
-
     enum Opt[+A]:
-
       def get: A =
         this match
           case Non()  => sys.error("Non.get")
@@ -42,7 +40,6 @@ object disjoining:
       case The[A](a: A) extends Opt[A]
 
     object Opt:
-
       val non: Opt[Nothing] =
         Non()
 

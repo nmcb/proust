@@ -1,6 +1,6 @@
 package proust
 
-import sequencing._
+import sequencing.*
 
 // expressions
 
@@ -84,9 +84,9 @@ case class Goal( current  : Exp
 
 object Goal:
 
-    import disjoining._
-    import parser._
-    import Holes._
+    import disjoining.*
+    import parser.*
+    import Holes.*
 
     def apply(task: String, trace: Boolean = false): Goal =
       val hypothesis: Typ =
@@ -104,10 +104,10 @@ object Goal:
 
 object parser:
 
-  import sequencing._
-  import Seq._
-  import parsing._
-  import P._
+  import sequencing.*
+  import Seq.*
+  import parsing.*
+  import P.*
 
   def name: P[Name] =
     oneOf("abcdefghifklmnopqrstuvwxyz-").oneOrMore.map(_.mkString)
@@ -119,7 +119,11 @@ object parser:
     token(name).map(n => Var(n))
 
   def hole: P[Hol] =
-    for { _ <- reserved("?") ; i <- digit.zeroOrMore } yield Hol(i.mkString)
+    for
+      _ <- reserved("?")
+      i <- digit.zeroOrMore
+    yield
+      Hol(i.mkString)
     
   def application: P[Exp] =
     for
@@ -248,7 +252,6 @@ object parser:
     run(typ)(s)
 
 object printer:
-
   def ppexp(e: Exp): String =
     e match
       case Lam(s,e)   => s"(λ ${ppexp(s)} => ${ppexp(e)})"
@@ -279,7 +282,7 @@ object printer:
   def ppgoal(g: Goal): String =
     s"""${g.holes.numbers.size} Goals in ${ppexp(g.current)}
         |${ppholes(g.holes)}
-        |${if (g.isSolved) "\nSolved." else ""}
+        |${if g.isSolved then "\nSolved." else ""}
       """.stripMargin
 
   def pprint: State[Goal,Unit] =
@@ -287,14 +290,14 @@ object printer:
 
 object typer:
 
-  import printer._
+  import printer.*
 
   def check(ctx: Ctx, exp: Exp, typ: Typ, ref: Boolean = false): (Boolean,Ctx) =
     def cerror(msg: String = "unable to check") = 
       sys.error(cinfo(msg))
 
     def cinfo(msg: String = ""): String =
-      s"""CHECK ${if (ref) then "[refining] " + msg else msg}
+      s"""CHECK ${if ref then "[refining] " + msg else msg}
          |Exp: ${ppexp(exp)}
          |Typ: ${pptyp(typ)}
          |Ctx: ${ppctx(ctx)}
@@ -305,19 +308,15 @@ object typer:
     (exp,typ) match
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
       case ( Lam(x,t) , _        ) => cerror()
-      case ( Hol(n)   , _        ) => if (ref)
-                                        then (true, ctx + (Hol(n) -> typ))
-                                        else (true, ctx)
-      case _                       => if (typ == synth(ctx, exp, ref))
-                                        then (true, ctx)
-                                        else cerror()
+      case ( Hol(n)   , _        ) => if ref then (true, ctx + (Hol(n) -> typ)) else (true, ctx)
+      case _                       => if typ == synth(ctx, exp, ref) then (true, ctx) else cerror()
 
   def synth(ctx: Ctx, exp: Exp, ref: Boolean = false): Typ =
     def serror(msg: String = "unable to synth") = 
       sys.error(sinfo(msg))
 
     def sinfo(msg: String = "trace"): String =
-      s"""SYNTH ${if (ref) then s"[refining] - $msg" else msg}
+      s"""SYNTH ${if ref then s"[refining] - $msg" else msg}
          |exp: ${ppexp(exp)}
          |ctx: ${ppctx(ctx)}
        """.stripMargin
@@ -376,10 +375,10 @@ object State:
 
 object assistent:
 
-  import printer._
-  import parser._
-  import typer._
-  import State._
+  import printer.*
+  import parser.*
+  import typer.*
+  import State.*
 
   def holes(exp: Exp): State[Int,Exp] =
     exp match

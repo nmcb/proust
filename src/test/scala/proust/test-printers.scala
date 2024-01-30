@@ -2,11 +2,11 @@ package proust
 package test
 
 import org.junit.Test
-import org.junit.Assert._
+import org.junit.Assert.*
 
 class PrinterTests:
 
-  import printer._
+  import printer.*
 
   @Test def testPrintExp(): Unit =
     assertEquals( "(λ a => b)" , ppexp(Lam(Var("a"),Var("b"))))

@@ -2,8 +2,8 @@ package proust
 
 object sequencing:
 
-  import disjoining._
-  import option._
+  import disjoining.*
+  import option.*
 
   enum Seq[+A]:
 
@@ -76,7 +76,6 @@ object sequencing:
     case Cel[A](override val a: A, override val r: Seq[A]) extends Seq[A]
 
   object Seq:
-
     val end: Seq[Nothing] =
       End()
 
@@ -86,7 +85,7 @@ object sequencing:
     def concat[A](l: Seq[A], r: Seq[A]): Seq[A] =
       l ++ r
 
-      // scala library convertions
+    // scala library convertions
 
     import scala.List
 

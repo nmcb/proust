@@ -2,12 +2,12 @@ package proust
 package test
 
 import org.junit.Test
-import org.junit.Assert._
+import org.junit.Assert.*
 
 class DisjoiningTests:
 
-  import disjoining._
-  import option._
+  import disjoining.*
+  import option.*
 
   @Test def testOptGetOrElse(): Unit =
     assertEquals( 1 , Opt.non.getOrElse(1))

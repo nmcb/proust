@@ -2,12 +2,12 @@ package proust
 package test
 
 import org.junit.Test
-import org.junit.Assert._
+import org.junit.Assert.*
 
 class SequencingTests:
 
-  import sequencing._
-  import Seq._
+  import sequencing.*
+  import Seq.*
 
   @Test def testEnd(): Unit =
     assertEquals( Seq() , end)

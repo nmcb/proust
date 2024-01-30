@@ -2,17 +2,17 @@ package proust
 package test
 
 import org.junit.Test
-import org.junit.Assert._
+import org.junit.Assert.*
 
 class ProustTests:
 
-  import disjoining.option._
-  import Opt._
+  import disjoining.option.*
+  import Opt.*
 
-  import printer._
-  import parser._
-  import typer._
-  import assistent._
+  import printer.*
+  import parser.*
+  import typer.*
+  import assistent.*
 
   private def proof(p: String): Boolean =
     scala.util

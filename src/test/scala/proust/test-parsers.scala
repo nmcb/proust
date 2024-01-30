@@ -1,14 +1,14 @@
 package proust
 package test
 
-import org.junit._
-import org.junit.Assert._
+import org.junit.*
+import org.junit.Assert.*
 
 class ParserTests:
 
-  import sequencing._
-  import parsing._
-  import P._
+  import sequencing.*
+  import parsing.*
+  import P.*
 
   @Test def testFlatMap(): Unit =
     assertEquals(run(
@@ -70,9 +70,9 @@ class ParserTests:
 
 class CalculatorParserTests:
 
-  import parsing._
-  import calculator._
-  import P._
+  import parsing.*
+  import calculator.*
+  import P.*
 
   @Test def testInt(): Unit =
     assertEquals( Lit(1)   , run(int)("1"))
@@ -122,10 +122,10 @@ class CalculatorParserTests:
 
 class ProustParserTests:
 
-  import disjoining.option._
-  import parsing._
-  import P._
-  import parser._
+  import disjoining.option.*
+  import parsing.*
+  import P.*
+  import parser.*
 
   @Test def testProustParserName(): Unit =
     assertEquals( "a"   , run(name)("a"))

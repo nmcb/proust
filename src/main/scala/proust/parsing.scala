@@ -2,11 +2,10 @@ package proust
 
 object parsing:
 
-  import sequencing._
-  import disjoining.option._
+  import sequencing.*
+  import disjoining.option.*
 
   case class P[+A](parse: String => Seq[(A,String)]):
-
     def identity: P[A] =
       this
 
@@ -67,7 +66,6 @@ object parsing:
       P(s => Seq(rest(s)))
 
   object P:
-
     def run[A](p: P[A])(s: String): A =
       p.parse(s) match
         case Seq((a, "")) => a
@@ -122,8 +120,8 @@ object parsing:
 
   object calculator:
 
-    import parsing._
-    import P._
+    import parsing.*
+    import P.*
 
     sealed trait Expr
     case class Add(l: Expr, r: Expr) extends Expr
@@ -152,7 +150,7 @@ object parsing:
     // mulop  = "*" | "/"
 
     def int: P[Expr] =
-      for { n <- number } yield Lit(n)
+      number.map(Lit.apply)
 
     def expr: P[Expr] =
       term.chainl1(addop)
