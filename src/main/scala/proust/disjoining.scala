@@ -1,85 +1,60 @@
 package proust
 
-object disjoining {
+object disjoining:
 
-sealed abstract class D[L,R] {
+  sealed abstract class D[L,R]:
+    def isLeft: Boolean
+    def isRight: Boolean
+    def identity: D[L,R] = this
 
-  def isLeft: Boolean
+  case class L[L](l: L) extends D[L,Nothing]:
+    def isLeft: Boolean  = true
+    def isRight: Boolean = false
 
-  def isRight: Boolean
+  case class R[R](r: R) extends D[Nothing,R]:
+    def isLeft: Boolean  = false
+    def isRight: Boolean = true
 
-  def identity: D[L,R] =
-    this
-}
+  object option:
+    enum Opt[+A]:
+      def get: A =
+        this match
+          case Non()  => sys.error("Non.get")
+          case The(a) => a
 
-case class L[L](l: L) extends D[L,Nothing] {
+      def isEmpty: Boolean =
+        this match
+          case Non()  => true
+          case The(a) => false
 
-  def isLeft: Boolean  =
-    true
+      def nonEmpty: Boolean =
+        !isEmpty
 
-  def isRight: Boolean =
-    false
-}
+      def getOrElse[A1 >: A](a: => A1): A1 =
+        if nonEmpty then get else a
 
-case class R[R](r: R) extends D[Nothing,R] {
+      val at: () => A =
+        () => get
 
-  def isLeft: Boolean  =
-    true
-  
-  def isRight: Boolean =
-    false
-}
+      case Non[Nothing]() extends Opt[Nothing]
+      case The[A](a: A) extends Opt[A]
 
-object option {
+    object Opt:
+      val non: Opt[Nothing] =
+        Non()
 
-  enum Opt[+A] {
+      def empty[A]: Opt[A] =
+        Non()
 
-    def get: A =
-      this match {
-        case Non()  => sys.error("Non.get")
-        case The(a) => a
-      }
+      def unit[A](a: A): Opt[A] =
+        The(a)
 
-    def isEmpty: Boolean =
-      this match {
-        case Non()  => true
-        case The(a) => false
-      }
-      
-    def nonEmpty: Boolean =
-      !isEmpty
+      // scala library converstions
 
-    def getOrElse[A1 >: A](a: => A1): A1 =
-      if (nonEmpty) then get else a
+      def apply[A](a: A): Opt[A] =
+        unit(a)
 
-    val at: () => A =
-      () => get
-        
-    case Non[Nothing]() extends Opt[Nothing]
-    case The[A](a: A) extends Opt[A]
-  }
-
-  object Opt {
-
-    val non: Opt[Nothing] =
-      Non()
-
-    def empty[A]: Opt[A] =
-      Non()
-
-    def unit[A](a: A): Opt[A] =
-      The(a)
-
-    // scala library converstions
-
-    def apply[A](a: A): Opt[A] =
-      unit(a)
-
-    def unapply[A](oa: Opt[A]): Option[A] =
-      oa match {
-        case The(a) => Some(a)
-        case Non()  => None
-      }
-  }
-}
-}
+      def unapply[A](oa: Opt[A]): Option[A] =
+        oa match
+          case The(a) => Some(a)
+          case Non()  => None

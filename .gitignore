@@ -1,12 +1,9 @@
 *.class
 *.log
 .idea/
-.dotty-ide*
 target/
 .bsp/
 .vscode/
 .DS_Store
 *.bloop/
 *.metals/
-project/project/
-project/metals.sbt
