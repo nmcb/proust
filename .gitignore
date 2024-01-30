@@ -7,5 +7,3 @@ target/
 .DS_Store
 *.bloop/
 *.metals/
-project/project/
-project/metals.sbt
