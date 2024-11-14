@@ -36,7 +36,7 @@ object Hol:
 
 // types
 
-trait Typ 
+sealed trait Typ
 case class Arr(a: Typ, b: Typ) extends Typ
 case class Den(n: Name)        extends Typ
 case class PTp(l: Typ, r: Typ) extends Typ
