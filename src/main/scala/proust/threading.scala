@@ -21,7 +21,7 @@ object threading:
     def get[I]: State[I,I,I] =
       inspect(identity)
 
-    def set[O](o: O): State[_,O,Unit] =
+    def set[O](o: O): State[?,O,Unit] =
       State(_ => ((), o))
 
     def modify[I,O](fo: I => O): State[I,O,Unit] =
