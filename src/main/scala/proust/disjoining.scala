@@ -49,7 +49,7 @@ object disjoining:
       def unit[A](a: A): Opt[A] =
         The(a)
 
-      // scala library converstions
+      // scala library conversions
 
       def apply[A](a: A): Opt[A] =
         unit(a)

@@ -84,9 +84,7 @@ case class Goal( current  : Exp
 
 object Goal:
 
-    import disjoining.*
     import parser.*
-    import Holes.*
 
     def apply(task: String, trace: Boolean = false): Goal =
       val hypothesis: Typ =
@@ -303,8 +301,6 @@ object typer:
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
-    println(cinfo())
-
     (exp,typ) match
       case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
       case ( Lam(x,t) , _        ) => cerror()
@@ -320,8 +316,6 @@ object typer:
          |exp: ${ppexp(exp)}
          |ctx: ${ppctx(ctx)}
        """.stripMargin
-
-    println(sinfo())
 
     exp match
       case Lam(_,_)                                 => serror()

@@ -10,5 +10,5 @@ class DisjoiningTests:
   import option.*
 
   @Test def testOptGetOrElse(): Unit =
-    assertEquals( 1 , Opt.non.getOrElse(1))
-    assertEquals( 1 , Opt(1).getOrElse(2))
+    assertEquals(1, Opt.non.getOrElse(1))
+    assertEquals(1, Opt(1).getOrElse(2))
