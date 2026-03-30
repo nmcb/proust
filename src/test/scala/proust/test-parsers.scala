@@ -6,6 +6,7 @@ import org.junit.Assert.*
 
 class ParserTests:
 
+  import Typ.*
   import sequencing.*
   import parsing.*
   import P.*
@@ -122,6 +123,7 @@ class CalculatorParserTests:
 
 class ProustParserTests:
 
+  import Typ.*
   import disjoining.option.*
   import parsing.*
   import P.*
