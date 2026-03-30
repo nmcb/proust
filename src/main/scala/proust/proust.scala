@@ -36,11 +36,13 @@ object Hol:
 
 // types
 
-sealed trait Typ
-case class Arr(a: Typ, b: Typ) extends Typ
-case class Den(n: Name)        extends Typ
-case class PTp(l: Typ, r: Typ) extends Typ
-case class STp(l: Typ, r: Typ) extends Typ
+enum Typ:
+  case Arr(a: Typ, b: Typ)
+  case Den(n: Name)
+  case PTp(l: Typ, r: Typ)
+  case STp(l: Typ, r: Typ)
+
+import Typ.*
 
 // context
 
@@ -263,7 +265,7 @@ object printer:
       case Sum(i,l,r) => s"(or ${ppexp(i)} ${ppexp(l)} ${ppexp(r)})"
 
   def pptyp(t: Typ): String =
-    t match
+    t.runtimeChecked match
       case Den(n)   => n
       case PTp(a,b) => s"${pptyp(a)} ∧ ${pptyp(b)}"
       case STp(a,b) => s"${pptyp(a)} ∨ ${pptyp(b)}"

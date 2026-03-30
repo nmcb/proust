@@ -6,6 +6,7 @@ import org.junit.Assert.*
 
 class PrinterTests:
 
+  import Typ.*
   import printer.*
 
   @Test def testPrintExp(): Unit =
