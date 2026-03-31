@@ -1,11 +1,13 @@
 package proust
 
+import scala.annotation.tailrec
+
 object parsing:
 
   import sequencing.*
-  import disjoining.option.*
 
-  case class P[+A](parse: String => Seq[(A,String)]):
+  case class P[+A](parse: String => Seq[(A, String)]):
+
     def identity: P[A] =
       this
 
@@ -19,7 +21,7 @@ object parsing:
       P.fail
 
     def bind[B](f: A => P[B]): P[B] =
-      P(s => parse(s).map((a,ss) => f(a).parse(ss)).foldl(Seq.empty)(r => rs => r ++ rs))
+      P(s => parse(s).map((a, ss) => f(a).parse(ss)).foldl(Seq.empty)(r => rs => r ++ rs))
 
     def flatMap[B](f: A => P[B]): P[B] =
       bind(f)
@@ -28,39 +30,56 @@ object parsing:
       P(s => parse(s).map((a, ss) => (f(a), ss)))
 
     def ap[B](ff: P[A => B]): P[B] =
-      P(s => ff.parse(s).flatMap((f,s1) => parse(s1).map((a,s2) => (f(a),s2))))
+      P(s => ff.parse(s).flatMap((f, ss) => parse(ss).map((a, sss) => (f(a), sss))))
 
-    def |!|[A1 >: A](that: => P[A1]): P[A1] =
+    def |!|[B >: A](that: => P[B]): P[B] =
       P(s =>
         parse(s) match
-          case Seq.end => that.parse(s)
-          case res: Seq[(A1, String)] => res
+          case Seq.end               => that.parse(s)
+          case res: Seq[(B, String)] => res
       )
 
-    def |&|[A1 >: A](that: P[A1]): P[A1] =
+    def |&|[B >: A](that: P[B]): P[B] =
       P(s => parse(s) ++ that.parse(s))
 
     def |~|[B](that: P[B]): P[B] =
-      for { _ <- this ; b <- that } yield b
+      for
+        _ <- this
+        b <- that
+      yield
+        b
 
-    def foldl[B](b: B)(f: B => A => B): P[B] =
-      P(s => parse(s).bind((a,ss) => Seq((f(b)(a),ss))))
+    def foldLeft[B](b: B)(f: B => A => B): P[B] =
+      P(s => parse(s).bind((a, ss) => Seq((f(b)(a), ss))))
 
-    def chainl[A1 >: A](pf: P[A1 => A1 => A1])(a: A1): P[A1] =
-      chainl1(pf) |!| unit(a)
+    def chainLeft[B >: A](pf: P[B => B => B])(a: B): P[B] =
+      chainLeft1(pf) |!| unit(a)
 
-    def chainl1[A1 >: A](pf: P[A1 => A1 => A1]): P[A1] =
-      def rest(a: A1): P[A1] = (for { f <- pf ; b <- this ; r <- rest(f(a)(b)) } yield r) |!| unit(a)
-      for { a <- this ; r <- rest(a) } yield r
+    def chainLeft1[B >: A](pf: P[B => B => B]): P[B] =
+      def rest(a: B): P[B] = (
+        for
+          f <- pf
+          b <- this
+          r <- rest(f(a)(b))
+        yield
+          r
+        ) |!| unit(a)
+      
+      for
+        a <- this
+        r <- rest(a)
+      yield
+        r
 
+    @tailrec
     private def rest[B >: A](s: String, acc: Seq[B] = Seq.empty): (Seq[B], String) =
       parse(s) match
-        case Seq.end     => (acc.reverse, s)
-        case Seq((a,ss)) => rest(ss, a :: acc)
-        case l           => sys.error(s"Multiple results: ${l}")
+        case Seq.end      => (acc.reverse, s)
+        case Seq((a, ss)) => rest(ss, a :: acc)
+        case l            => sys.error(s"Multiple results: $l")
 
     def oneOrMore: P[Seq[A]] =
-      P(s => parse(s).bind((a,ss) => Seq(rest(ss, Seq(a)))))
+      P(s => parse(s).bind((a, ss) => Seq(rest(ss, Seq(a)))))
 
     def zeroOrMore: P[Seq[A]] =
       P(s => Seq(rest(s)))
@@ -76,7 +95,7 @@ object parsing:
       P(s => Seq((a, s)))
 
     def item: P[Char] =
-      P(s => if (s.length == 0) Seq.empty else Seq((s.head, s.tail)))
+      P(s => if (s.isEmpty) Seq.empty else Seq((s.head, s.tail)))
 
     def fail[A]: P[A] =
       P(_ => Seq.empty)
@@ -94,13 +113,24 @@ object parsing:
       satisfy(_ == c)
 
     def string(s: String): P[String] =
-      if s.isEmpty then unit("") else for { _ <- char(s.head) ; _ <- string(s.tail) } yield s
+      if s.isEmpty then
+        unit("")
+      else
+        for
+          _ <- char(s.head)
+          _ <- string(s.tail)
+        yield
+          s
 
     def spaces: P[String] =
       oneOf(" \t\n\r").zeroOrMore.map(_.mkString)
 
     def token[A](p: P[A]): P[A] =
-      for { a <- p ; _ <- spaces } yield a
+      for
+        a <- p
+        _ <- spaces
+      yield
+        a
 
     def reserved(keyword: String): P[String] =
       token(string(keyword))
@@ -109,18 +139,30 @@ object parsing:
       satisfy(_.isDigit)
 
     def number: P[Int] =
-      for { s <- string("-") |!| unit("") ; r <- digit.oneOrMore } yield (s + r.mkString).toInt
+      for
+        s <- string("-") |!| unit("")
+        r <- digit.oneOrMore
+      yield
+        (s + r.mkString).toInt
 
     def parens[A](pa: P[A]): P[A] =
-      for { _ <- reserved("(") ; a <- pa ; _ <- reserved(")") } yield a
+      for
+        _ <- reserved("(")
+        a <- pa
+        _ <- reserved(")")
+      yield
+        a
 
     def separated[A](sep: String, pa: P[A]): P[Seq[A]] =
-      for { h <- pa ; t <- (reserved(sep) |~| pa).zeroOrMore } yield h :: t
+      for
+        h <- pa
+        t <- (reserved(sep) |~| pa).zeroOrMore
+      yield
+        h :: t
 
 
   object calculator:
 
-    import parsing.*
     import P.*
 
     sealed trait Expr
@@ -153,10 +195,10 @@ object parsing:
       number.map(Lit.apply)
 
     def expr: P[Expr] =
-      term.chainl1(addop)
+      term.chainLeft1(addop)
 
     def term: P[Expr] =
-      factor.chainl1(mulop)
+      factor.chainLeft1(mulop)
 
     def factor: P[Expr] =
       int |!| parens(expr)
