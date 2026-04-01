@@ -23,11 +23,11 @@ class ParserTests:
   private def gt: P[Char => Char => Char] =
     unit(x => y => if (x > y) x else y)
 
-  @Test def testChainl1(): Unit =
+  @Test def testChainLeft1(): Unit =
     assertEquals('2', run(digit.chainLeft1(gt))("12"))
     assertEquals('3', run(digit.chainLeft1(gt))("123"))
 
-  @Test def testChainl(): Unit =
+  @Test def testChainLeft(): Unit =
     assertEquals('0', run(digit.chainLeft(gt)('0'))(""))
     assertEquals('1', run(digit.chainLeft(gt)('0'))("1"))
     assertEquals('2', run(digit.chainLeft(gt)('0'))("12"))
