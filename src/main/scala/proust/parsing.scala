@@ -64,7 +64,7 @@ object parsing:
         yield
           r
         ) |!| unit(a)
-      
+
       for
         a <- this
         r <- rest(a)
