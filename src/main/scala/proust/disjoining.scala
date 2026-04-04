@@ -2,18 +2,20 @@ package proust
 
 object disjoining:
 
-  sealed abstract class D[L,R]:
-    def isLeft: Boolean
-    def isRight: Boolean
-    def identity: D[L,R] = this
+  enum D[L, R]:
+    def isLeft: Boolean =
+      this match
+        case D.L(l) => true
+        case D.R(r) => false
+    def isRight: Boolean =
+      this match
+        case D.L(l) => false
+        case D.R(r) => true
+    def identity: D[L, R] =
+      this
 
-  case class L[L](l: L) extends D[L,Nothing]:
-    def isLeft: Boolean  = true
-    def isRight: Boolean = false
-
-  case class R[R](r: R) extends D[Nothing,R]:
-    def isLeft: Boolean  = false
-    def isRight: Boolean = true
+    case L[L](l: L) extends D[L, Nothing]
+    case R[R](r: R) extends D[Nothing, R]
 
   object option:
     enum Opt[+A]:
@@ -30,16 +32,17 @@ object disjoining:
       def nonEmpty: Boolean =
         !isEmpty
 
-      def getOrElse[A1 >: A](a: => A1): A1 =
+      def getOrElse[B >: A](a: => B): B =
         if nonEmpty then get else a
 
       val at: () => A =
         () => get
 
-      case Non[Nothing]() extends Opt[Nothing]
-      case The[A](a: A) extends Opt[A]
+      private case Non()     extends Opt[Nothing]
+      private case The(a: A) extends Opt[A]
 
     object Opt:
+      
       val non: Opt[Nothing] =
         Non()
 
