@@ -73,14 +73,14 @@ object sequencing:
       foldLeft("")(b => a => b + a)
 
     def mkString(lhs: String, sep: String, rhs: String): String =
-      s"${lhs}${foldLeft("")(b => a => (b + sep + a)).drop(sep.length)}${rhs}"
+      s"$lhs${foldLeft("")(b => a => b + sep + a).drop(sep.length)}$rhs"
 
     case End()                                          extends Seq[Nothing]
     case Cel(override val a: A, override val r: Seq[A]) extends Seq[A]
 
   object Seq:
     
-    val nil: Seq[Nothing] =
+    val end: Seq[Nothing] =
       End()
 
     def empty[A]: Seq[A] =
