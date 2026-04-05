@@ -21,7 +21,7 @@ object parsing:
       P.fail
 
     def bind[B](f: A => P[B]): P[B] =
-      P(s => parse(s).map((a, ss) => f(a).parse(ss)).foldl(Seq.empty)(r => rs => r ++ rs))
+      P(s => parse(s).map((a, ss) => f(a).parse(ss)).foldLeft(Seq.empty)(r => rs => r ++ rs))
 
     def flatMap[B](f: A => P[B]): P[B] =
       bind(f)
@@ -35,7 +35,7 @@ object parsing:
     def |!|[B >: A](that: => P[B]): P[B] =
       P(s =>
         parse(s) match
-          case Seq.end               => that.parse(s)
+          case Seq.`nil`               => that.parse(s)
           case res: Seq[(B, String)] => res
       )
 
@@ -74,7 +74,7 @@ object parsing:
     @tailrec
     private def rest[B >: A](s: String, acc: Seq[B] = Seq.empty): (Seq[B], String) =
       parse(s) match
-        case Seq.end      => (acc.reverse, s)
+        case Seq.`nil`      => (acc.reverse, s)
         case Seq((a, ss)) => rest(ss, a :: acc)
         case l            => sys.error(s"Multiple results: $l")
 

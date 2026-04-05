@@ -187,7 +187,7 @@ object parser:
       es <- expression.oneOrMore
       _  <- reserved(")")
     yield
-      es.foldl(App(e1,e2))(a => e => App(a, e))
+      es.foldLeft(App(e1,e2))(a => e => App(a, e))
 
   def expression: P[Exp] =
     product |!| lhs |!| rhs |!| lambda |!| hole |!| variable |!| annotation |!| application |!| apprep
@@ -228,7 +228,7 @@ object parser:
   def arrrep: P[Typ] =
     def rassoc(ts: Seq[Typ]): Typ =
       ts.reverse match
-        case Cel(a1,Cel(a2,r)) => r.foldl(Arr(a2, a1))(a => e => Arr(e,a))
+        case Cel(a1,Cel(a2,r)) => r.foldLeft(Arr(a2, a1))(a => e => Arr(e,a))
         case _                 => sys.error("boom!")
 
     for

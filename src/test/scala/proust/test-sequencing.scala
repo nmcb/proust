@@ -10,20 +10,20 @@ class SequencingTests:
   import Seq.*
 
   @Test def testEnd(): Unit =
-    assertEquals( Seq() , end)
+    assertEquals( Seq() , nil)
 
   @Test def testCons(): Unit =
-    assertEquals(             End()  ,           end )
-    assertEquals(       Cel(0,End()) ,      0 :: end )
-    assertEquals(Cel(0, Cel(1,End())), 0 :: 1 :: end )
+    assertEquals(             End()  ,           nil )
+    assertEquals(       Cel(0,End()) ,      0 :: nil )
+    assertEquals(Cel(0, Cel(1,End())), 0 :: 1 :: nil )
 
   @Test def testConcat(): Unit =
-    assertEquals(               end,        end  ++                       end   )
-    assertEquals(          1 :: end,        end  ++                 (1 :: end)  )
-    assertEquals(          1 :: end,  (1 :: end) ++                       end   )
-    assertEquals(     1 :: 2 :: end,  (1 :: end) ++                 (2 :: end)  )
-    assertEquals(1 :: 2 :: 3 :: end, ((1 :: end) ++  (2 :: end)) ++ (3 :: end)  )
-    assertEquals(1 :: 2 :: 3 :: end,  (1 :: end) ++ ((2 :: end)  ++ (3 :: end)) )
+    assertEquals(               nil,        nil  ++                       nil   )
+    assertEquals(          1 :: nil,        nil  ++                 (1 :: nil)  )
+    assertEquals(          1 :: nil,  (1 :: nil) ++                       nil   )
+    assertEquals(     1 :: 2 :: nil,  (1 :: nil) ++                 (2 :: nil)  )
+    assertEquals(1 :: 2 :: 3 :: nil, ((1 :: nil) ++  (2 :: nil)) ++ (3 :: nil)  )
+    assertEquals(1 :: 2 :: 3 :: nil,  (1 :: nil) ++ ((2 :: nil)  ++ (3 :: nil)) )
 
   @Test def testApply(): Unit =
     assertEquals(            End()  , Seq()    )
@@ -39,23 +39,23 @@ class SequencingTests:
     assertTrue(Seq(1)   match { case Seq(1)   => true ; case _ => false } )
     assertTrue(Seq(1,2) match { case Seq(1,2) => true ; case _ => false } )
 
-  val one =      1 :: end
-  val two = 1 :: 2 :: end
+  val one =      1 :: nil
+  val two = 1 :: 2 :: nil
 
   @Test def testFoldLeft(): Unit =
-    assertEquals((3,"1122"), two.foldl((1,""))((c,s) => a => (c + 1, s + c + a)))
+    assertEquals((3,"1122"), two.foldLeft((1,""))((c, s) => a => (c + 1, s + c + a)))
 
   @Test def testFoldRight(): Unit =
-    assertEquals((3,"1221"), two.foldr((1,""))(a => (c,s) => (c + 1, s + c + a)))
+    assertEquals((3,"1221"), two.foldRight((1,""))(a => (c, s) => (c + 1, s + c + a)))
 
   @Test def testMap(): Unit =
-    assertEquals("1" :: "2" :: end, two.map(_.toString))
+    assertEquals("1" :: "2" :: nil, two.map(_.toString))
 
   @Test def testBind(): Unit =
-    assertEquals(1 :: 1 :: 2 :: 2 :: end, two.bind(a => Seq(a,a)))
+    assertEquals(1 :: 1 :: 2 :: 2 :: nil, two.bind(a => Seq(a,a)))
 
   @Test def testFlatMap(): Unit =
-    assertEquals(4 :: 5 :: 5 :: 6 :: end,
+    assertEquals(4 :: 5 :: 5 :: 6 :: nil,
       for
         a <- Seq(1,2)
         b <- Seq(3,4)

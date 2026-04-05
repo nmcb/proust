@@ -1,5 +1,7 @@
 package proust
 
+import scala.annotation.tailrec
+
 object sequencing:
 
   import disjoining.*
@@ -43,20 +45,21 @@ object sequencing:
     def flatMap[B](f: A => Seq[B]): Seq[B] =
       bind(f)
 
-    def foldl[B](b: B)(f: B => A => B): B =
+    def foldLeft[B](b: B)(f: B => A => B): B =
       this match
         case End()    => b
-        case Cel(a,r) => r.foldl(f(b)(a))(f)
+        case Cel(a,r) => r.foldLeft(f(b)(a))(f)
 
-    def foldr[B](b: B)(f: A => B => B): B =
+    def foldRight[B](b: B)(f: A => B => B): B =
       this match
         case End()    => b
-        case Cel(a,r) => f(a)(r.foldr(b)(f))
+        case Cel(a,r) => f(a)(r.foldRight(b)(f))
 
     def reverse: Seq[A] =
-      foldr(Seq.empty)(a => l => l ++ Seq(a))
+      foldRight(Seq.empty)(a => l => l ++ Seq(a))
 
     def length: Int =
+        @tailrec
         def loop(l: Seq[A], acc: Int = 0): Int =
           l match
             case End()    => acc
@@ -67,16 +70,17 @@ object sequencing:
       length
 
     def mkString: String =
-      foldl("")(b => a => b + a)
+      foldLeft("")(b => a => b + a)
 
     def mkString(lhs: String, sep: String, rhs: String): String =
-      s"${lhs}${foldl("")(b => a => (b + sep + a)).drop(sep.length)}${rhs}"
+      s"${lhs}${foldLeft("")(b => a => (b + sep + a)).drop(sep.length)}${rhs}"
 
-    case End[Nothing]()                                    extends Seq[Nothing]
-    case Cel[A](override val a: A, override val r: Seq[A]) extends Seq[A]
+    case End()                                          extends Seq[Nothing]
+    case Cel(override val a: A, override val r: Seq[A]) extends Seq[A]
 
   object Seq:
-    val end: Seq[Nothing] =
+    
+    val nil: Seq[Nothing] =
       End()
 
     def empty[A]: Seq[A] =
@@ -85,7 +89,7 @@ object sequencing:
     def concat[A](l: Seq[A], r: Seq[A]): Seq[A] =
       l ++ r
 
-    // scala library convertions
+    // scala library conversions
 
     import scala.List
 
@@ -96,4 +100,4 @@ object sequencing:
       l.foldRight(Seq.empty)((a,s) => Cel(a,s))
 
     def unapplySeq[A](sa: Seq[A]): Option[List[A]] =
-      Some(sa.foldr(List.empty)(a => b => a :: b))
+      Some(sa.foldRight(List.empty)(a => b => a :: b))
