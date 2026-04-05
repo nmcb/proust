@@ -14,8 +14,8 @@ object disjoining:
     def identity: D[L, R] =
       this
 
-    case L[L](l: L) extends D[L, Nothing]
-    case R[R](r: R) extends D[Nothing, R]
+    private case L(l: L) extends D[L, Nothing]
+    private case R(r: R) extends D[Nothing, R]
 
   object option:
     enum Opt[+A]:
@@ -29,7 +29,7 @@ object disjoining:
           case Non()  => true
           case The(a) => false
 
-      def nonEmpty: Boolean =
+      private def nonEmpty: Boolean =
         !isEmpty
 
       def getOrElse[B >: A](a: => B): B =
