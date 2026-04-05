@@ -1,6 +1,7 @@
 package proust
 
 object threading:
+  
   case class State[I,O,A](run: I => (A,O)):
     def map[B](f: A => B): State[I,O,B] =
       flatMap(a => State(s => (f(a),s)))
@@ -8,7 +9,8 @@ object threading:
     def flatMap[B,E](f: A => State[O,E,B]): State[I,E,B] =
       State(s => { val (a,ss) = run(s) ; f(a).run(ss) })
 
-  object State:
+  private object State:
+    
     def pure[I,A](a: A): State[I,I,A] =
       State(i => (a,i))
 
