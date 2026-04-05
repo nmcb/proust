@@ -1,5 +1,4 @@
 package proust
-package test
 
 import org.junit.Test
 import org.junit.Assert.*
@@ -39,8 +38,8 @@ class SequencingTests:
     assertTrue(Seq(1)   match { case Seq(1)   => true ; case _ => false } )
     assertTrue(Seq(1,2) match { case Seq(1,2) => true ; case _ => false } )
 
-  val one =      1 :: end
-  val two = 1 :: 2 :: end
+  val one: Seq[Int] =      1 :: end
+  val two: Seq[Int] = 1 :: 2 :: end
 
   @Test def testFoldLeft(): Unit =
     assertEquals((3,"1122"), two.foldLeft((1,""))((c, s) => a => (c + 1, s + c + a)))
