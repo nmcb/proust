@@ -21,7 +21,7 @@ object parsing:
       P.fail
 
     def bind[B](f: A => P[B]): P[B] =
-      P(s => parse(s).map((a, ss) => f(a).parse(ss)).foldl(Seq.empty)(r => rs => r ++ rs))
+      P(s => parse(s).map((a, ss) => f(a).parse(ss)).foldLeft(Seq.empty)(r => rs => r ++ rs))
 
     def flatMap[B](f: A => P[B]): P[B] =
       bind(f)
@@ -39,7 +39,7 @@ object parsing:
           case res: Seq[(B, String)] => res
       )
 
-    def |&|[B >: A](that: P[B]): P[B] =
+    private def |&|[B >: A](that: P[B]): P[B] =
       P(s => parse(s) ++ that.parse(s))
 
     def |~|[B](that: P[B]): P[B] =
@@ -85,6 +85,7 @@ object parsing:
       P(s => Seq(rest(s)))
 
   object P:
+
     def run[A](p: P[A])(s: String): A =
       p.parse(s) match
         case Seq((a, "")) => a
@@ -97,10 +98,10 @@ object parsing:
     def item: P[Char] =
       P(s => if (s.isEmpty) Seq.empty else Seq((s.head, s.tail)))
 
-    def fail[A]: P[A] =
+    private def fail[A]: P[A] =
       P(_ => Seq.empty)
 
-    def combine[A](l: P[A], r: P[A]): P[A] =
+    private def combine[A](l: P[A], r: P[A]): P[A] =
       l |&| r
 
     def satisfy(p: Char => Boolean): P[Char] =
@@ -195,21 +196,21 @@ object parsing:
       number.map(Lit.apply)
 
     def expr: P[Expr] =
-      term.chainLeft1(addop)
+      term.chainLeft1(addition)
 
     def term: P[Expr] =
-      factor.chainLeft1(mulop)
+      factor.chainLeft1(multiplication)
 
     def factor: P[Expr] =
       int |!| parens(expr)
 
-    def addop: P[Expr => Expr => Expr] =
-      infixop("+", l => r => Add(l, r)) |!| infixop("-", l => r => Sub(l, r))
+    private def addition: P[Expr => Expr => Expr] =
+      infix("+", l => r => Add(l, r)) |!| infix("-", l => r => Sub(l, r))
 
-    def mulop: P[Expr => Expr => Expr] =
-      infixop("*", l => r => Mul(l, r)) |!| infixop("/", l => r => Div(l, r))
+    private def multiplication: P[Expr => Expr => Expr] =
+      infix("*", l => r => Mul(l, r)) |!| infix("/", l => r => Div(l, r))
 
-    def infixop(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
+    private def infix(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
       reserved(s) |~| unit(f)
 
     def parse(s: String): Expr =

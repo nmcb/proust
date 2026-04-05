@@ -43,10 +43,10 @@ class SequencingTests:
   val two = 1 :: 2 :: end
 
   @Test def testFoldLeft(): Unit =
-    assertEquals((3,"1122"), two.foldl((1,""))((c,s) => a => (c + 1, s + c + a)))
+    assertEquals((3,"1122"), two.foldLeft((1,""))((c, s) => a => (c + 1, s + c + a)))
 
   @Test def testFoldRight(): Unit =
-    assertEquals((3,"1221"), two.foldr((1,""))(a => (c,s) => (c + 1, s + c + a)))
+    assertEquals((3,"1221"), two.foldRight((1,""))(a => (c, s) => (c + 1, s + c + a)))
 
   @Test def testMap(): Unit =
     assertEquals("1" :: "2" :: end, two.map(_.toString))
