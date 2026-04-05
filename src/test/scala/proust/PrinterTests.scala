@@ -1,5 +1,4 @@
 package proust
-package test
 
 import org.junit.Test
 import org.junit.Assert.*

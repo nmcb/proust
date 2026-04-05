@@ -1,18 +1,13 @@
 package proust
-package test
 
-import org.junit.Test
 import org.junit.Assert.*
+import org.junit.Test
 
 class ProustTests:
 
-  import disjoining.option.*
-  import Opt.*
-
-  import printer.*
+  import assistent.*
   import parser.*
   import typer.*
-  import assistent.*
 
   private def proof(p: String): Boolean =
     scala.util
@@ -186,5 +181,5 @@ class ProustTests:
   @Test def testTrivialOreProof(): Unit =
     proof("(λ d => (ore d (λ a => a) (λ a => a))) : A ∨ A -> A")
   
-  @Test def testTrivialSumCummutativeProof(): Unit =
+  @Test def testTrivialSumCommutativeProof(): Unit =
     proof("(λ d => (ore d (λ a => (lhs a)) (λ b => (rhs b)))) : A ∨ B -> B ∨ A")

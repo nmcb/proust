@@ -184,13 +184,13 @@ object parsing:
         case Div(l, r) => eval(l) / eval(r)
         case Lit(v)    => v
 
-    // digit  = "0" | "1" | ... | "8" | "9"
-    // int    = [ "-" ] digit { digit }
-    // expr   = term { addop term }
-    // term   = factor { mulop factor }
-    // factor = "(" expr ")" | number
-    // addop  = "+" | "-"
-    // mulop  = "*" | "/"
+    // digit           = "0" | "1" | ... | "8" | "9"
+    // int             = [ "-" ] digit { digit }
+    // expr            = term { addition term }
+    // term            = factor { multiplication factor }
+    // factor          = "(" expr ")" | number
+    // addition        = "+" | "-"
+    // multiplication  = "*" | "/"
 
     def int: P[Expr] =
       number.map(Lit.apply)
@@ -213,5 +213,5 @@ object parsing:
     private def infix(s: String, f: Expr => Expr => Expr): P[Expr => Expr => Expr] =
       reserved(s) |~| unit(f)
 
-    def parse(s: String): Expr =
+    private def parse(s: String): Expr =
       run(expr)(s)
