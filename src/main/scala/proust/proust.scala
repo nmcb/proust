@@ -2,39 +2,23 @@ package proust
 
 import sequencing.*
 
+import scala.annotation.tailrec
+
 // expressions
 
 type Name = String
 type Err  = Exception
 
-sealed trait Exp
-sealed trait Sym extends Exp:
-  def n: Name
-
-case class Lam(s: Sym, e: Exp)         extends Exp
-case class App(f: Exp, x: Exp)         extends Exp
-case class Ann(e: Exp, t: Typ)         extends Exp
-case class Prd(l: Exp, r: Exp)         extends Exp
-case class Lhs(e: Exp)                 extends Exp
-case class Rhs(e: Exp)                 extends Exp
-case class Sum(i: Exp, l: Exp, r: Exp) extends Exp
-case class Var(n: Name)                extends Sym
-
-case class Hol(n: Name)                extends Sym:
-  def isEmpty: Boolean =
-    n == ""
-
-  def nr: Int =
-    if (!isEmpty) n.toInt else sys.error("nr on empty hole")
-
-object Hol:
-  def apply(i: Int): Hol =
-    Hol(i.toString)
-
-  val empty: Hol =
-    Hol("")
-
-// types
+enum Exp:
+  case Lam(s: Name, e: Exp)
+  case App(f: Exp, x: Exp)
+  case Ann(e: Exp, t: Typ)
+  case Prd(l: Exp, r: Exp)
+  case Lhs(e: Exp)
+  case Rhs(e: Exp)
+  case Sum(i: Exp, l: Exp, r: Exp)
+  case Var(n: Name)
+  case Hol(n: Int)
 
 enum Typ:
   case Arr(a: Typ, b: Typ)
@@ -43,19 +27,21 @@ enum Typ:
   case STp(l: Typ, r: Typ)
 
 import Typ.*
+import Exp.*
 
 // context
 
-type Ctx = Map[Sym,Typ]
+type Ctx = Map[Name, Typ]
 
 object Ctx:
   def empty: Ctx =
     Map.empty
 
-type Hole = (Int,Typ,Ctx)
+type Hole = (Int, Typ, Ctx)
 
-case class Holes(holes : Map[Int,(Typ,Ctx)] = Map[Int,(Typ,Ctx)]()):
-  def get(hole: Int): (Typ,Ctx) =
+case class Holes(holes : Map[Int, (Typ, Ctx)] = Map[Int, (Typ, Ctx)]()):
+
+  def get(hole: Int): (Typ, Ctx) =
     holes.getOrElse(hole, sys.error(s"hole $hole doesn't exist"))
   
   def numbers: Seq[Int] =
@@ -70,11 +56,12 @@ case class Holes(holes : Map[Int,(Typ,Ctx)] = Map[Int,(Typ,Ctx)]()):
   def map[B](f: Hole => B): Seq[B] =
     Seq(holes.map({ case (n,(t,c)) => f((n,t,c))}))
 
-object Holes:
+private object Holes:
+
   def empty: Holes =
     Holes()
 
-  def apply(typ: Typ): Holes =
+  def make(typ: Typ): Holes =
     Holes(Map(0 -> (typ -> Map.empty)))
 
 case class Goal( current  : Exp
@@ -96,7 +83,7 @@ object Goal:
         Ann(Hol(0), hypothesis)
       
       Goal( current  = proof
-          , holes    = Holes(hypothesis)
+          , holes    = Holes.make(hypothesis)
           , nextNr   = 1
           , isSolved = false
           , trace    = trace
@@ -123,7 +110,7 @@ object parser:
       _ <- reserved("?")
       i <- digit.zeroOrMore
     yield
-      Hol(i.mkString)
+      if i.length == 0 then Hol(-1) else Hol(i.mkString.toInt)
     
   def application: P[Exp] =
     for
@@ -137,12 +124,12 @@ object parser:
   def lambda: P[Exp] =
     for
       _  <- reserved("(λ")
-      s  <- variable
+      v  <- variable
       _  <- reserved("=>")
       e  <- expression
       _  <- reserved(")")
     yield
-      Lam(s, e)
+      Lam(v.n, e)
 
   def annotation: P[Exp] =
     for
@@ -179,7 +166,7 @@ object parser:
     yield
       Rhs(e)
     
-  def apprep: P[Exp] =
+  private def apprep: P[Exp] =
     for
       _  <- reserved("(")
       e1 <- expression
@@ -225,7 +212,7 @@ object parser:
     yield
       Arr(a, b)
 
-  def arrrep: P[Typ] =
+  private def arrrep: P[Typ] =
     def rassoc(ts: Seq[Typ]): Typ =
       ts.reverse match
         case Cel(a1,Cel(a2,r)) => r.foldLeft(Arr(a2, a1))(a => e => Arr(e,a))
@@ -252,17 +239,19 @@ object parser:
     run(typ)(s)
 
 object printer:
-  def ppexp(e: Exp): String =
+
+  def ppexp(e: Exp | Name): String =
     e match
-      case Lam(s,e)   => s"(λ ${ppexp(s)} => ${ppexp(e)})"
-      case App(f,a)   => s"(${ppexp(f)} ${ppexp(a)})"
-      case Hol(n)     => s"?$n"
-      case Var(n)     => n
-      case Ann(e,t)   => s"(${ppexp(e)} : ${pptyp(t)})"
-      case Prd(e1,e2) => s"(and ${ppexp(e1)} ${ppexp(e2)})"
-      case Lhs(e)     => s"(lhs ${ppexp(e)})"
-      case Rhs(e)     => s"(rhs ${ppexp(e)})"
-      case Sum(i,l,r) => s"(or ${ppexp(i)} ${ppexp(l)} ${ppexp(r)})"
+      case Lam(n, e)    => s"(λ ${ppexp(n)} => ${ppexp(e)})"
+      case App(f, a)    => s"(${ppexp(f)} ${ppexp(a)})"
+      case Hol(n)       => s"?$n"
+      case Var(n)       => n
+      case Ann(e, t)    => s"(${ppexp(e)} : ${pptyp(t)})"
+      case Prd(e1, e2)  => s"(and ${ppexp(e1)} ${ppexp(e2)})"
+      case Lhs(e)       => s"(lhs ${ppexp(e)})"
+      case Rhs(e)       => s"(rhs ${ppexp(e)})"
+      case Sum(i, l, r) => s"(or ${ppexp(i)} ${ppexp(l)} ${ppexp(r)})"
+      case name: String => name
 
   def pptyp(t: Typ): String =
     t.runtimeChecked match
@@ -272,9 +261,9 @@ object printer:
       case Arr(a,b) => s"(${pptyp(a)} -> ${pptyp(b)})"
 
   def ppctx(c: Ctx): String = 
-    c.map((s,t) => s"\n${s.n} : ${pptyp(t)}").mkString
+    c.map((s,t) => s"\n$s : ${pptyp(t)}").mkString
 
-  def ppholes(holes: Holes): String =
+  private def ppholes(holes: Holes): String =
     holes
       .map((nr,t,c) => s"[$nr] : ${pptyp(t)} in context ${ppctx(c)}")
       .mkString
@@ -292,7 +281,8 @@ object typer:
 
   import printer.*
 
-  def check(ctx: Ctx, exp: Exp, typ: Typ, ref: Boolean = false): (Boolean,Ctx) =
+  @tailrec
+  def check(ctx: Ctx, exp: Exp, typ: Typ, ref: Boolean = false): (Boolean, Ctx) =
     def cerror(msg: String = "unable to check") = 
       sys.error(cinfo(msg))
 
@@ -303,11 +293,11 @@ object typer:
          |Ctx: ${ppctx(ctx)}
       """.stripMargin.trim
 
-    (exp,typ) match
-      case ( Lam(s,e) , Arr(a,b) ) => check(ctx + (s -> a), e, b, ref)
-      case ( Lam(x,t) , _        ) => cerror()
-      case ( Hol(n)   , _        ) => if ref then (true, ctx + (Hol(n) -> typ)) else (true, ctx)
-      case _                       => if typ == synth(ctx, exp, ref) then (true, ctx) else cerror()
+    (exp, typ) match
+      case ( Lam(s, e) , Arr(a, b) ) => check(ctx + (s -> a), e, b, ref)
+      case ( Lam(x, t) , _         ) => cerror()
+      case ( Hol(n)    , _         ) => if ref then (true, ctx + (n.toString -> typ)) else (true, ctx)
+      case _                         => if typ == synth(ctx, exp, ref) then (true, ctx) else cerror()
 
   def synth(ctx: Ctx, exp: Exp, ref: Boolean = false): Typ =
     def serror(msg: String = "unable to synth") = 
@@ -320,53 +310,53 @@ object typer:
        """.stripMargin
 
     exp match
-      case Lam(_,_)                                 => serror()
-      case Hol(_)                                   => serror()
-      case Ann(e,t) if check(ctx, e, t, ref)._1     => t
-      case Prd(a,b)                                 => PTp(synth(ctx, a, ref), synth(ctx, b, ref))
-      case App(f,x)                                 =>
+      case Lam(_, _)                                 => serror()
+      case Hol(_)                                    => serror()
+      case Ann(e, t) if check(ctx, e, t, ref)._1     => t
+      case Prd(a, b)                                 => PTp(synth(ctx, a, ref), synth(ctx, b, ref))
+      case App(f, x)                                 =>
         synth(ctx, f, ref) match
-          case Arr(a,b) if check(ctx, x, a, ref)._1 => b
-          case _                                    => serror()
-      case Var(n)                                   => ctx.getOrElse(Var(n), serror())
-      case Lhs(e)                                   =>
+          case Arr(a, b) if check(ctx, x, a, ref)._1 => b
+          case _                                     => serror()
+      case Var(n)                                    => ctx.getOrElse(n, serror())
+      case Lhs(e)                                    =>
         synth(ctx, e, ref) match
-          case PTp(l,_)                             => l
-          case _                                    => serror()
-      case Rhs(e)                                   =>
+          case PTp(l, _)                             => l
+          case _                                     => serror()
+      case Rhs(e)                                    =>
         synth(ctx, e, ref) match
-          case PTp(_,r)                             => r
-          case _                                    => serror()
-      case _                                        => serror()
+          case PTp(_, r)                             => r
+          case _                                     => serror()
+      case _                                         => serror()
 
-case class State[S,A](run: S => (A,S)):
-  def map[B](f: A => B): State[S,B] =
-    flatMap(a => State(s => (f(a),s)))
+case class State[S, A](run: S => (A, S)):
+  def map[B](f: A => B): State[S, B] =
+    flatMap(a => State(s => (f(a), s)))
 
-  def map2[B](fa: S => B, fs: S => S): State[S,B] =
+  def map2[B](fa: S => B, fs: S => S): State[S, B] =
     State(s => (fa(s), fs(s)))
 
-  def flatMap[B](f: A => State[S,B]): State[S,B] =
+  def flatMap[B](f: A => State[S,B]): State[S, B] =
     State(s => { val (a,ss) = run(s) ; f(a).run(ss) })
 
 
 object State:
-  def pure[S,A](a: A): State[S,A] =
+  def pure[S, A](a: A): State[S, A] =
     State(s => (a,s))
 
-  def inspect[S,A](f: S => A): State[S,A] =
-    State(s => (f(s),s))
+  def inspect[S, A](f: S => A): State[S, A] =
+    State(s => (f(s), s))
 
-  def bimap[S,A](fa: S => A, fs: S => S): State[S,A] =
-    State(s => (fa(s),fs(s)))
+  def bimap[S, A](fa: S => A, fs: S => S): State[S, A] =
+    State(s => (fa(s), fs(s)))
   
-  def get[S]: State[S,S] =
+  def get[S]: State[S, S] =
     inspect(identity)
 
-  def set[S](s: S): State[S,Unit] =
-    State(_ => ((),s))
+  def set[S](s: S): State[S, Unit] =
+    State(_ => ((), s))
 
-  def modify[S](f: S => S): State[S,Unit] =
+  def modify[S](f: S => S): State[S, Unit] =
     State(s => ((), f(s)))
 
 object assistent:
@@ -376,34 +366,34 @@ object assistent:
   import typer.*
   import State.*
 
-  def holes(exp: Exp): State[Int,Exp] =
+  private def holes(exp: Exp): State[Int, Exp] =
     exp match
-      case Lam(s,e)   => holes(e).map(ne => Lam(s, ne))
-      case App(f,a)   => for {e1 <- holes(f); e2 <- holes(a)} yield App(e1, e2)
-      case v: Var     => pure(v)
-      case Ann(e,t)   => holes(e).map(ne => Ann(ne, t))
-      case Hol.empty  => bimap(n => Hol(n), n => n + 1)
-      case h: Hol     => pure(h)
-      case Prd(l,r)   => for {nl <- holes(l); nr <- holes(r)} yield Prd(nl ,nr)
-      case Lhs(e)     => holes(e).map(ne => Lhs(ne))
-      case Rhs(e)     => holes(e).map(ne => Rhs(ne))
-      case Sum(i,l,r) => for {ni <- holes(i); nl <- holes(l); nr <- holes(r)} yield Sum(ni, nl, nr)
+      case Lam(s, e)         => holes(e).map(ne => Lam(s, ne))
+      case App(f, a)         => for {e1 <- holes(f); e2 <- holes(a)} yield App(e1, e2)
+      case v: Var            => pure(v)
+      case Ann(e, t)         => holes(e).map(ne => Ann(ne, t))
+      case Hol(n) if n == -1 => bimap(n => Hol(n), n => n + 1)
+      case h: Hol            => pure(h)
+      case Prd(l, r)         => for {nl <- holes(l); nr <- holes(r)} yield Prd(nl ,nr)
+      case Lhs(e)            => holes(e).map(ne => Lhs(ne))
+      case Rhs(e)            => holes(e).map(ne => Rhs(ne))
+      case Sum(i, l, r)      => for {ni <- holes(i); nl <- holes(l); nr <- holes(r)} yield Sum(ni, nl, nr)
 
-  def number(exp: Exp): State[Int,Exp] =
-    (for { ne <- holes(exp) } yield ne)
+  def number(exp: Exp): State[Int, Exp] =
+    for { ne <- holes(exp) } yield ne
 
   def replace(nr: Int, rep: Exp, exp: Exp): Exp =
     exp match
-      case Lam(s,e)   => Lam(s, replace(nr, rep, e))
-      case App(f,a)   => App(replace(nr, rep, f), replace(nr, rep, a))
-      case Var(n)     => Var(n)
-      case Ann(e,t)   => Ann(replace(nr, rep, e), t)
-      case Hol("")    => sys.error(s"unnumbered hole in expression: $exp")
-      case Hol(n)     => if n.toInt == nr then rep else Hol(n)
-      case Prd(e1,e2) => Prd(replace(nr, rep, e1), replace(nr, rep, e2))
-      case Lhs(e)     => Lhs(replace(nr, rep, e))
-      case Rhs(e)     => Rhs(replace(nr, rep, e))
-      case Sum(i,l,r) => Sum(replace(nr, rep, i), replace(nr, rep, l), replace(nr, rep, r))
+      case Lam(s, e)    => Lam(s, replace(nr, rep, e))
+      case App(f, a)    => App(replace(nr, rep, f), replace(nr, rep, a))
+      case Var(n)       => Var(n)
+      case Ann(e, t)    => Ann(replace(nr, rep, e), t)
+      case Hol(-1)      => sys.error(s"unnumbered hole in expression: $exp")
+      case Hol(n)       => if n == nr then rep else Hol(n)
+      case Prd(e1, e2)  => Prd(replace(nr, rep, e1), replace(nr, rep, e2))
+      case Lhs(e)       => Lhs(replace(nr, rep, e))
+      case Rhs(e)       => Rhs(replace(nr, rep, e))
+      case Sum(i, l, r) => Sum(replace(nr, rep, i), replace(nr, rep, l), replace(nr, rep, r))
 
   def task(task: String): State[Goal,Exp] =
     State(_ =>
@@ -411,24 +401,24 @@ object assistent:
       (goal.current, goal)
     )
 
-  def solved: State[Goal,Boolean] =
+  def solved: State[Goal, Boolean] =
     State(g => (g.isSolved, g))
 
-  def refine(hole: Int, refinement: String): State[Goal,Goal] =
+  def refine(hole: Int, refinement: String): State[Goal, Goal] =
     val exp: Exp =
       eparse(refinement)
       
     State(goal =>
       if (goal.trace) println(ppgoal(goal))
 
-      val (typ,c)  = goal.holes.get(hole)
-      val _        = check(c, exp, typ)
-      val (ne, nc) = number(exp).run(goal.nextNr)
-      val (_, ctx) = check(c, ne, typ, ref = true)
+      val (typ, c)  = goal.holes.get(hole)
+      val _         = check(c, exp, typ)
+      val (ne, nc)  = number(exp).run(goal.nextNr)
+      val (_, ctx)  = check(c, ne, typ, ref = true)
 
       val ngoal =
         if nc != hole + 1 then
-          val nhole    = ( hole+1 , ctx(Hol(hole+1)) ,  ctx )
+          val nhole    = ( hole + 1 , ctx((hole + 1).toString) ,  ctx )
           val nexp     = replace(hole, ne, goal.current)
           val nholes   = goal.holes - hole + nhole
           goal.copy(nexp, nholes, nc)

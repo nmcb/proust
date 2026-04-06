@@ -8,6 +8,7 @@ class ProustTests:
   import assistent.*
   import parser.*
   import typer.*
+  import Exp.*
 
   private def proof(p: String): Boolean =
     scala.util
@@ -20,8 +21,8 @@ class ProustTests:
     proof("((λ x => (λ y => x)) : (A -> (B -> A)))")
 
   @Test def testNumber(): Unit =
-    val fix = Lam(Var("a"),App(Hol.empty,Hol.empty))
-    val exp = Lam(Var("a"),App(Hol(0),Hol(1)))
+    val fix = Lam("a",App(Hol(-1),Hol(-1)))
+    val exp = Lam("a",App(Hol(0),Hol(1)))
     assertEquals( (exp, 2) , number(fix).run(0))
 
   @Test def testRefine(): Unit =

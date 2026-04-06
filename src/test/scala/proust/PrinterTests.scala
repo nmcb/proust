@@ -6,10 +6,11 @@ import org.junit.Assert.*
 class PrinterTests:
 
   import Typ.*
+  import Exp.*
   import printer.*
 
   @Test def testPrintExp(): Unit =
-    assertEquals("(λ a => b)", ppexp(Lam(Var("a"),Var("b"))))
+    assertEquals("(λ a => b)", ppexp(Lam("a",Var("b"))))
     assertEquals("(a b)"     , ppexp(App(Var("a"),Var("b"))))
     assertEquals("(a : A)"   , ppexp(Ann(Var("a"),Den("A"))))
     assertEquals("a"         , ppexp(Var("a")))
