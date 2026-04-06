@@ -5,6 +5,7 @@ import org.junit.Test
 
 class ProustParserTests:
 
+  import Exp.*
   import Typ.*
   import parsing.*
   import P.*
@@ -26,20 +27,20 @@ class ProustParserTests:
     assertEquals(Var("a-b"), run(variable)("a-b \n"))
 
   @Test def testProustParserHole(): Unit =
-    assertEquals(Hol(""), run(hole)("?"))
-    assertEquals(Hol("1"), run(hole)("?1"))
-    assertEquals(Hol("12"), run(hole)("?12"))
+    assertEquals(Hol(-1), run(hole)("?"))
+    assertEquals(Hol(1), run(hole)("?1"))
+    assertEquals(Hol(12), run(hole)("?12"))
 
   @Test def testProustParserApplication(): Unit =
     // formal application form
     assertEquals(App(Var("a"), Var("b")), run(application)("(a b)"))
-    assertEquals(App(Hol(""), Hol("")), run(application)("(? ?)"))
+    assertEquals(App(Hol(-1), Hol(-1)), run(application)("(? ?)"))
     assertEquals(App(App(Var("a"), Var("b")), Var("c")), run(application)("((a b) c)"))
     assertEquals(App(Var("a"), App(Var("b"), Var("c"))), run(application)("(a (b c))"))
 
   @Test def testProustParserLambda(): Unit =
-    assertEquals(Lam(Var("a"), Var("b")), run(lambda)("(λ a => b)"))
-    assertEquals(Lam(Var("a"), Lam(Var("b"), Var("c"))), run(lambda)("(λ a => (λ b => c))"))
+    assertEquals(Lam("a", Var("b")), run(lambda)("(λ a => b)"))
+    assertEquals(Lam("a", Lam("b", Var("c"))), run(lambda)("(λ a => (λ b => c))"))
 
   @Test def testProustParserAnnotation(): Unit =
     assertEquals(Ann(Var("a"), Den("A")), run(annotation)("(a : A)"))
@@ -54,7 +55,7 @@ class ProustParserTests:
     assertEquals(Rhs(Prd(Var("a"), Var("b"))), run(rhs)("(rhs (and a b))"))
 
   @Test def testProustParserExpr(): Unit =
-    assertEquals(Lam(Var("a"), Var("b")), run(expression)("(λ a => b)"))
+    assertEquals(Lam("a", Var("b")), run(expression)("(λ a => b)"))
     assertEquals(App(Var("a"), Var("b")), run(expression)("(a  b)"))
     assertEquals(Var("a"), run(expression)("a"))
     assertEquals(Ann(Var("a"), Den("A")), run(expression)("(a : A)"))
