@@ -240,42 +240,42 @@ object parser:
 
 object printer:
 
-  def ppexp(e: Exp | Name): String =
+  def prettyPrint(e: Exp | Name): String =
     e match
-      case Lam(n, e)    => s"(λ ${ppexp(n)} => ${ppexp(e)})"
-      case App(f, a)    => s"(${ppexp(f)} ${ppexp(a)})"
+      case Lam(n, e)    => s"(λ ${prettyPrint(n)} => ${prettyPrint(e)})"
+      case App(f, a)    => s"(${prettyPrint(f)} ${prettyPrint(a)})"
       case Hol(n)       => s"?$n"
       case Var(n)       => n
-      case Ann(e, t)    => s"(${ppexp(e)} : ${pptyp(t)})"
-      case Prd(e1, e2)  => s"(and ${ppexp(e1)} ${ppexp(e2)})"
-      case Lhs(e)       => s"(lhs ${ppexp(e)})"
-      case Rhs(e)       => s"(rhs ${ppexp(e)})"
-      case Sum(i, l, r) => s"(or ${ppexp(i)} ${ppexp(l)} ${ppexp(r)})"
+      case Ann(e, t)    => s"(${prettyPrint(e)} : ${prettyPrint(t)})"
+      case Prd(e1, e2)  => s"(and ${prettyPrint(e1)} ${prettyPrint(e2)})"
+      case Lhs(e)       => s"(lhs ${prettyPrint(e)})"
+      case Rhs(e)       => s"(rhs ${prettyPrint(e)})"
+      case Sum(i, l, r) => s"(or ${prettyPrint(i)} ${prettyPrint(l)} ${prettyPrint(r)})"
       case name: String => name
 
-  def pptyp(t: Typ): String =
-    t.runtimeChecked match
+  def prettyPrint(t: Typ): String =
+    t match
       case Den(n)   => n
-      case PTp(a,b) => s"${pptyp(a)} ∧ ${pptyp(b)}"
-      case STp(a,b) => s"${pptyp(a)} ∨ ${pptyp(b)}"
-      case Arr(a,b) => s"(${pptyp(a)} -> ${pptyp(b)})"
+      case PTp(a, b) => s"${prettyPrint(a)} ∧ ${prettyPrint(b)}"
+      case STp(a, b) => s"${prettyPrint(a)} ∨ ${prettyPrint(b)}"
+      case Arr(a, b) => s"(${prettyPrint(a)} -> ${prettyPrint(b)})"
 
-  def ppctx(c: Ctx): String = 
-    c.map((s,t) => s"\n$s : ${pptyp(t)}").mkString
+  def prettyPrint(c: Ctx): String = 
+    c.map((s, t) => s"\n$s : ${prettyPrint(t)}").mkString
 
-  private def ppholes(holes: Holes): String =
+  private def prettyPrint(holes: Holes): String =
     holes
-      .map((nr,t,c) => s"[$nr] : ${pptyp(t)} in context ${ppctx(c)}")
+      .map((nr,t,c) => s"[$nr] : ${prettyPrint(t)} in context ${prettyPrint(c)}")
       .mkString
   
-  def ppgoal(g: Goal): String =
-    s"""${g.holes.numbers.size} Goals in ${ppexp(g.current)}
-        |${ppholes(g.holes)}
+  def prettyPrint(g: Goal): String =
+    s"""${g.holes.numbers.size} Goals in ${prettyPrint(g.current)}
+        |${prettyPrint(g.holes)}
         |${if g.isSolved then "\nSolved." else ""}
       """.stripMargin
 
-  def pprint: State[Goal,Unit] =
-    State(g => (println(ppgoal(g)),g))
+  def prettyPrint: State[Goal,Unit] =
+    State(g => (println(prettyPrint(g)),g))
 
 object typer:
 
@@ -283,51 +283,51 @@ object typer:
 
   @tailrec
   def check(ctx: Ctx, exp: Exp, typ: Typ, ref: Boolean = false): (Boolean, Ctx) =
-    def cerror(msg: String = "unable to check") = 
-      sys.error(cinfo(msg))
+    def checkError(msg: String = "unable to check") = 
+      sys.error(checkInfo(msg))
 
-    def cinfo(msg: String = ""): String =
+    def checkInfo(msg: String = ""): String =
       s"""CHECK ${if ref then "[refining] " + msg else msg}
-         |Exp: ${ppexp(exp)}
-         |Typ: ${pptyp(typ)}
-         |Ctx: ${ppctx(ctx)}
+         |Exp: ${prettyPrint(exp)}
+         |Typ: ${prettyPrint(typ)}
+         |Ctx: ${prettyPrint(ctx)}
       """.stripMargin.trim
 
     (exp, typ) match
       case ( Lam(s, e) , Arr(a, b) ) => check(ctx + (s -> a), e, b, ref)
-      case ( Lam(x, t) , _         ) => cerror()
+      case ( Lam(x, t) , _         ) => checkError()
       case ( Hol(n)    , _         ) => if ref then (true, ctx + (n.toString -> typ)) else (true, ctx)
-      case _                         => if typ == synth(ctx, exp, ref) then (true, ctx) else cerror()
+      case _                         => if typ == synth(ctx, exp, ref) then (true, ctx) else checkError()
 
   def synth(ctx: Ctx, exp: Exp, ref: Boolean = false): Typ =
-    def serror(msg: String = "unable to synth") = 
-      sys.error(sinfo(msg))
+    def synthError(msg: String = "unable to synth") = 
+      sys.error(synthInfo(msg))
 
-    def sinfo(msg: String = "trace"): String =
+    def synthInfo(msg: String = "trace"): String =
       s"""SYNTH ${if ref then s"[refining] - $msg" else msg}
-         |exp: ${ppexp(exp)}
-         |ctx: ${ppctx(ctx)}
+         |exp: ${prettyPrint(exp)}
+         |ctx: ${prettyPrint(ctx)}
        """.stripMargin
 
     exp match
-      case Lam(_, _)                                 => serror()
-      case Hol(_)                                    => serror()
+      case Lam(_, _)                                 => synthError()
+      case Hol(_)                                    => synthError()
       case Ann(e, t) if check(ctx, e, t, ref)._1     => t
       case Prd(a, b)                                 => PTp(synth(ctx, a, ref), synth(ctx, b, ref))
       case App(f, x)                                 =>
         synth(ctx, f, ref) match
           case Arr(a, b) if check(ctx, x, a, ref)._1 => b
-          case _                                     => serror()
-      case Var(n)                                    => ctx.getOrElse(n, serror())
+          case _                                     => synthError()
+      case Var(n)                                    => ctx.getOrElse(n, synthError())
       case Lhs(e)                                    =>
         synth(ctx, e, ref) match
           case PTp(l, _)                             => l
-          case _                                     => serror()
+          case _                                     => synthError()
       case Rhs(e)                                    =>
         synth(ctx, e, ref) match
           case PTp(_, r)                             => r
-          case _                                     => serror()
-      case _                                         => serror()
+          case _                                     => synthError()
+      case _                                         => synthError()
 
 case class State[S, A](run: S => (A, S)):
   def map[B](f: A => B): State[S, B] =
@@ -359,7 +359,7 @@ object State:
   def modify[S](f: S => S): State[S, Unit] =
     State(s => ((), f(s)))
 
-object assistent:
+object assistant:
 
   import printer.*
   import parser.*
@@ -409,7 +409,7 @@ object assistent:
       eparse(refinement)
       
     State(goal =>
-      if (goal.trace) println(ppgoal(goal))
+      if (goal.trace) println(prettyPrint(goal))
 
       val (typ, c)  = goal.holes.get(hole)
       val _         = check(c, exp, typ)
