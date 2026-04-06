@@ -5,7 +5,7 @@ import org.junit.Test
 
 class ProustTests:
 
-  import assistent.*
+  import assistant.*
   import parser.*
   import typer.*
   import Exp.*
