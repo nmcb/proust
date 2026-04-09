@@ -8,6 +8,7 @@ class CalculatorParserTests:
   import parsing.*
   import P.*
   import calculator.*
+  import Expr.*
 
   @Test def testInt(): Unit =
     assertEquals(Lit(1), run(int)("1"))
