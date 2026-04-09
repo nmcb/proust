@@ -166,12 +166,14 @@ object parsing:
 
     import P.*
 
-    sealed trait Expr
-    case class Add(l: Expr, r: Expr) extends Expr
-    case class Sub(l: Expr, r: Expr) extends Expr
-    case class Mul(l: Expr, r: Expr) extends Expr
-    case class Div(l: Expr, r: Expr) extends Expr
-    case class Lit(v: Int)           extends Expr
+    enum Expr:
+      case Add(l: Expr, r: Expr)
+      case Sub(l: Expr, r: Expr)
+      case Mul(l: Expr, r: Expr)
+      case Div(l: Expr, r: Expr)
+      case Lit(v: Int)
+
+    import Expr.*
 
     def eval(s: String): Int =
       eval(parse(s))
